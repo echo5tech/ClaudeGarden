@@ -32,7 +32,7 @@ export default function HomeScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ThemedText type="title">Claude Garden</ThemedText>
+        <ThemedText type="title">WeGarden</ThemedText>
         <ThemedText type="small">Plant catalog · Supabase smoke test</ThemedText>
 
         {error && (

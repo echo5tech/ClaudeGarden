@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { BedDesigner } from '@/components/designer/bed-designer';
 
 export const metadata: Metadata = {
-  title: 'Bed Designer — Claude Garden',
+  title: 'Bed Designer — WeGarden',
   description: 'Drag-and-drop garden bed planner with spacing validation.',
 };
 
