@@ -1,5 +1,5 @@
 {
-  "name": "claude-garden",
+  "name": "wegarden",
   "private": true,
   "scripts": {
     "build": "turbo run build",

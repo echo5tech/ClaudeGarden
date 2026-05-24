@@ -1,4 +1,4 @@
--- Initial schema for Claude Garden.
+-- Initial schema for WeGarden.
 -- Tables match the spec; `follows` replaces `friendships` (one-way Twitter-style).
 
 create extension if not exists "pgcrypto";

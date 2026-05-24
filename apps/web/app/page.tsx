@@ -32,7 +32,7 @@ export default async function Home() {
 
   return (
     <main className="min-h-screen px-8 py-16 max-w-3xl mx-auto">
-      <h1 className="text-4xl font-bold tracking-tight">Claude Garden</h1>
+      <h1 className="text-4xl font-bold tracking-tight">WeGarden</h1>
       <p className="text-zinc-500 mt-2 mb-12">
         Answer &ldquo;What should I plant now?&rdquo; — drag-and-drop bed designer,
         mobile reminders, and social sharing.
