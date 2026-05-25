@@ -27,6 +27,22 @@ export default function AppTabs() {
           renderingMode="template"
         />
       </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="gardens">
+        <NativeTabs.Trigger.Label>Gardens</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="tasks">
+        <NativeTabs.Trigger.Label>Tasks</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="botanist">
+        <NativeTabs.Trigger.Label>Botanist</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="journal">
+        <NativeTabs.Trigger.Label>Journal</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
     </NativeTabs>
   );
 }
