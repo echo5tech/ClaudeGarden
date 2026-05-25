@@ -28,14 +28,11 @@ export default {
       return new Response("user_id required", { status: 400 });
     }
 
-    // TODO: add a `device_tokens(user_id, expo_push_token, platform, updated_at)`
-    // table in a later migration. Mobile registers its token on app launch.
-    // For now, this stub returns 0 — wire up below once that table exists.
-    const tokens: string[] = [];
-    // const { data: tokens } = await ctx.supabaseAdmin
-    //   .from("device_tokens")
-    //   .select("expo_push_token")
-    //   .eq("user_id", user_id);
+    const { data: tokenRows } = await ctx.supabaseAdmin
+      .from("device_tokens")
+      .select("token")
+      .eq("user_id", user_id);
+    const tokens = (tokenRows ?? []).map((r) => r.token);
 
     const { data: tasks, error } = await ctx.supabaseAdmin
       .from("tasks")
