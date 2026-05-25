@@ -171,7 +171,7 @@ export default async function CalendarPage() {
     profile?.last_frost_date ? parseDate(profile.last_frost_date) : null;
 
   for (const bp of bedPlants ?? []) {
-    const plant = bp.plants as {
+    const plant = bp.plants as unknown as {
       common_name: string;
       days_to_harvest: number | null;
       sow_weeks_before_frost: number | null;
