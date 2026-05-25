@@ -2,6 +2,7 @@
 
 import { create } from 'zustand';
 import { plantFootprint, overlaps, fitsInBed } from '@garden/shared';
+import { createClient } from '@/lib/supabase/client';
 
 export interface CatalogPlant {
   id: string;
@@ -25,6 +26,11 @@ interface DesignerState {
   placed: PlacedPlant[];
   selectedId: string | null;
   scale: number; // px per inch
+  gardenId: string | null;
+  bedId: string | null;
+  isDirty: boolean;
+  saving: boolean;
+  saveError: string | null;
   setBed(w: number, h: number): void;
   setScale(s: number): void;
   select(id: string | null): void;
@@ -33,6 +39,13 @@ interface DesignerState {
   move(instanceId: string, x: number, y: number): void;
   remove(instanceId: string): void;
   clear(): void;
+  hydrate(
+    gardenId: string,
+    bedId: string | null,
+    bed?: { widthInches: number; heightInches: number },
+    placed?: PlacedPlant[],
+  ): void;
+  save(): Promise<void>;
 }
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
@@ -42,6 +55,11 @@ export const useDesignerStore = create<DesignerState>()((set, get) => ({
   placed: [],
   selectedId: null,
   scale: 8,
+  gardenId: null,
+  bedId: null,
+  isDirty: false,
+  saving: false,
+  saveError: null,
 
   setBed(w, h) {
     set({ bed: { widthInches: w, heightInches: h } });
@@ -77,7 +95,7 @@ export const useDesignerStore = create<DesignerState>()((set, get) => ({
       yInches: clamp(y, r, bed.heightInches - r),
       color: plant.color,
     };
-    set((s) => ({ placed: [...s.placed, instance] }));
+    set((s) => ({ placed: [...s.placed, instance], isDirty: true }));
   },
 
   move(instanceId, x, y) {
@@ -91,6 +109,7 @@ export const useDesignerStore = create<DesignerState>()((set, get) => ({
           yInches: clamp(y, r, s.bed.heightInches - r),
         };
       }),
+      isDirty: true,
     }));
   },
 
@@ -98,23 +117,89 @@ export const useDesignerStore = create<DesignerState>()((set, get) => ({
     set((s) => ({
       placed: s.placed.filter((p) => p.instanceId !== instanceId),
       selectedId: s.selectedId === instanceId ? null : s.selectedId,
+      isDirty: true,
     }));
   },
 
   clear() {
-    set({ placed: [], selectedId: null });
+    set({ placed: [], selectedId: null, isDirty: true });
+  },
+
+  hydrate(gardenId, bedId, bed, placed) {
+    set({
+      gardenId,
+      bedId,
+      bed: bed ?? { widthInches: 96, heightInches: 48 },
+      placed: placed ?? [],
+      isDirty: false,
+      saving: false,
+      saveError: null,
+      selectedId: null,
+    });
+  },
+
+  async save() {
+    const { gardenId, bedId, bed, placed } = get();
+    if (!gardenId) {
+      set({ saveError: 'No garden selected.' });
+      return;
+    }
+    set({ saving: true, saveError: null });
+    try {
+      const supabase = createClient();
+      const today = new Date().toISOString().slice(0, 10);
+
+      let currentBedId = bedId;
+
+      if (!currentBedId) {
+        // New bed: insert into beds
+        const { data, error } = await supabase
+          .from('beds')
+          .insert({
+            garden_id: gardenId,
+            width_inches: bed.widthInches,
+            height_inches: bed.heightInches,
+          })
+          .select('id')
+          .single();
+        if (error) throw error;
+        currentBedId = data.id;
+      } else {
+        // Existing bed: update dimensions + delete old bed_plants
+        const { error: updateError } = await supabase
+          .from('beds')
+          .update({
+            width_inches: bed.widthInches,
+            height_inches: bed.heightInches,
+          })
+          .eq('id', currentBedId);
+        if (updateError) throw updateError;
+
+        const { error: deleteError } = await supabase
+          .from('bed_plants')
+          .delete()
+          .eq('bed_id', currentBedId);
+        if (deleteError) throw deleteError;
+      }
+
+      // Bulk-insert fresh bed_plants
+      if (placed.length > 0) {
+        const { error: insertError } = await supabase.from('bed_plants').insert(
+          placed.map((p) => ({
+            bed_id: currentBedId!,
+            plant_id: p.plantId,
+            x_inches: p.xInches,
+            y_inches: p.yInches,
+            planted_date: today,
+          })),
+        );
+        if (insertError) throw insertError;
+      }
+
+      set({ bedId: currentBedId, isDirty: false, saving: false });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      set({ saveError: message, saving: false });
+    }
   },
 }));
-
-export const DEMO_CATALOG: CatalogPlant[] = [
-  { id: 'tomato',    name: 'Tomato',      spacingInches: 24, color: '#ef4444' },
-  { id: 'basil',     name: 'Basil',       spacingInches: 12, color: '#22c55e' },
-  { id: 'zucchini',  name: 'Zucchini',    spacingInches: 36, color: '#84cc16' },
-  { id: 'kale',      name: 'Kale',        spacingInches: 18, color: '#16a34a' },
-  { id: 'carrot',    name: 'Carrot',      spacingInches: 3,  color: '#f97316' },
-  { id: 'sunflower', name: 'Sunflower',   spacingInches: 18, color: '#eab308' },
-  { id: 'pepper',    name: 'Bell Pepper', spacingInches: 18, color: '#dc2626' },
-  { id: 'lettuce',   name: 'Lettuce',     spacingInches: 12, color: '#4ade80' },
-  { id: 'cucumber',  name: 'Cucumber',    spacingInches: 12, color: '#6ee7b7' },
-  { id: 'beans',     name: 'Bush Beans',  spacingInches: 6,  color: '#92400e' },
-];

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Geist, Geist_Mono } from 'next/font/google';
+import { NavLinks } from '@/components/nav-links';
 import './globals.css';
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
@@ -22,14 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Link href="/" className="font-semibold text-sm tracking-tight">
             WeGarden
           </Link>
-          <div className="flex items-center gap-4 text-sm text-zinc-500">
-            <Link href="/" className="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
-              Catalog
-            </Link>
-            <Link href="/designer" className="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
-              Designer
-            </Link>
-          </div>
+          <NavLinks />
         </nav>
         {children}
       </body>

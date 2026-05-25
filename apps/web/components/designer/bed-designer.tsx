@@ -11,12 +11,12 @@ import {
   useSensors,
 } from '@dnd-kit/core';
 import { snapCenterToCursor } from '@dnd-kit/modifiers';
-import { Minus, Plus, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { Loader2, Minus, Plus, Save, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
   CatalogPlant,
-  DEMO_CATALOG,
   PlacedPlant,
   useDesignerStore,
 } from './use-designer-store';
@@ -61,12 +61,33 @@ function getClientXY(event: Event): [number, number] {
   return [0, 0];
 }
 
-export function BedDesigner() {
-  const { bed, placed, scale, setBed, setScale, place, move, clear } =
-    useDesignerStore();
+export interface BedDesignerProps {
+  catalog: CatalogPlant[];
+  gardenId: string;
+  bedId: string | null;
+  initialBed?: { widthInches: number; heightInches: number };
+  initialPlaced?: PlacedPlant[];
+}
+
+export function BedDesigner({
+  catalog,
+  gardenId,
+  bedId: initialBedId,
+  initialBed,
+  initialPlaced,
+}: BedDesignerProps) {
+  const store = useDesignerStore();
+  const { bed, placed, scale, setBed, setScale, place, move, clear } = store;
+  const { isDirty, saving, saveError, bedId } = store;
 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activePlant, setActivePlant] = useState<CatalogPlant | PlacedPlant | null>(null);
+
+  // Hydrate store from server-loaded data on mount
+  useEffect(() => {
+    store.hydrate(gardenId, initialBedId, initialBed, initialPlaced);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -104,9 +125,21 @@ export function BedDesigner() {
     }
   }
 
+  async function handleSave() {
+    await store.save();
+    // Re-read store state after save to check for errors
+    const { saveError: err } = useDesignerStore.getState();
+    if (err) {
+      toast.error(`Save failed: ${err}`);
+    } else {
+      toast.success('Bed saved!');
+    }
+  }
+
   const widthFt = bed.widthInches / 12;
   const heightFt = bed.heightInches / 12;
   const zoomPct = Math.round((scale / 8) * 100);
+  const saveDisabled = saving || (!isDirty && bedId !== null);
 
   return (
     <div className="flex flex-col h-full">
@@ -155,6 +188,28 @@ export function BedDesigner() {
           Clear
         </Button>
 
+        <Button
+          variant="default"
+          size="sm"
+          onClick={handleSave}
+          disabled={saveDisabled}
+          className="gap-1.5"
+          aria-label="Save bed"
+        >
+          {saving ? (
+            <Loader2 className="size-3.5 animate-spin" />
+          ) : (
+            <Save className="size-3.5" />
+          )}
+          {saving ? 'Saving…' : 'Save'}
+        </Button>
+
+        {saveError && (
+          <span className="text-xs text-red-500 max-w-xs truncate" title={saveError}>
+            {saveError}
+          </span>
+        )}
+
         <div className="ml-auto text-xs text-zinc-400 hidden sm:block">
           {placed.length} plant{placed.length !== 1 ? 's' : ''} placed
         </div>
@@ -163,7 +218,7 @@ export function BedDesigner() {
       {/* ── Main area ── */}
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <div className="flex flex-1 min-h-0 overflow-hidden">
-          <PlantPalette plants={DEMO_CATALOG} />
+          <PlantPalette plants={catalog} />
           <BedCanvas draggingId={activeId} />
         </div>
 
