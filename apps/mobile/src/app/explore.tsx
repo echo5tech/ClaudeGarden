@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, StyleSheet, View } from "react-native";
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -16,6 +17,7 @@ type Garden = {
 };
 
 export default function ExploreScreen() {
+  const router = useRouter();
   const [gardens, setGardens] = useState<Garden[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -68,22 +70,33 @@ export default function ExploreScreen() {
               const ownerName = item.profiles?.display_name ?? "Unknown";
 
               return (
-                <ThemedView type="backgroundElement" style={styles.card}>
-                  <View style={styles.cardIcon}>
-                    <ThemedText style={styles.cardIconText}>🪴</ThemedText>
-                  </View>
-                  <View style={styles.cardBody}>
-                    <ThemedText style={[styles.cardName, styles.cardNameBold]}>
-                      {item.name}
-                    </ThemedText>
-                    <ThemedText type="small" themeColor="textSecondary">
-                      by @{ownerName}
-                    </ThemedText>
-                    <ThemedText type="small" themeColor="textSecondary">
-                      {bedCount} {bedCount === 1 ? "bed" : "beds"}
-                    </ThemedText>
-                  </View>
-                </ThemedView>
+                <Pressable
+                  onPress={() =>
+                    router.push({
+                      pathname: "/garden-detail",
+                      params: { gardenId: item.id },
+                    })
+                  }
+                  style={({ pressed }) => pressed && styles.pressed}
+                >
+                  <ThemedView type="backgroundElement" style={styles.card}>
+                    <View style={styles.cardIcon}>
+                      <ThemedText style={styles.cardIconText}>🪴</ThemedText>
+                    </View>
+                    <View style={styles.cardBody}>
+                      <ThemedText style={[styles.cardName, styles.cardNameBold]}>
+                        {item.name}
+                      </ThemedText>
+                      <ThemedText type="small" themeColor="textSecondary">
+                        by @{ownerName}
+                      </ThemedText>
+                      <ThemedText type="small" themeColor="textSecondary">
+                        {bedCount} {bedCount === 1 ? "bed" : "beds"}
+                      </ThemedText>
+                    </View>
+                    <ThemedText type="small" themeColor="textSecondary">›</ThemedText>
+                  </ThemedView>
+                </Pressable>
               );
             }}
           />
@@ -149,4 +162,5 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   error: { color: "#c00" },
+  pressed: { opacity: 0.7 },
 });
