@@ -1,0 +1,37 @@
+# Firebase App Hosting — WeGarden web (Next.js 16, pnpm monorepo)
+# https://firebase.google.com/docs/app-hosting/configure
+
+runConfig:
+  runtime: nodejs22
+  cpu: 1
+  memoryMiB: 512
+  minInstances: 0   # scale to zero when idle
+  maxInstances: 100
+  concurrency: 80
+
+# ── Environment variables ────────────────────────────────────────────────────
+# NEXT_PUBLIC_* values are safe to inline here (they ship to the browser).
+# All server-only secrets (e.g. service-role key) must go through
+# Google Cloud Secret Manager and be referenced with `secret:` below.
+env:
+  - variable: NEXT_PUBLIC_SUPABASE_URL
+    value: ""        # paste your Supabase project URL (https://<ref>.supabase.co)
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+    value: ""        # paste your Supabase anon/publishable key
+    availability:
+      - BUILD
+      - RUNTIME
+
+  # Server-only Supabase service-role key — stored in Secret Manager.
+  # Create it with: firebase apphosting:secrets:set SUPABASE_SERVICE_ROLE_KEY
+  # - variable: SUPABASE_SERVICE_ROLE_KEY
+  #   secret: SUPABASE_SERVICE_ROLE_KEY
+  #   availability:
+  #     - RUNTIME
+
+  # Anthropic key for the botanist-chat Edge Function (set in Supabase secrets,
+  # NOT here — this is only a reminder comment).
