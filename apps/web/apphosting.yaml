@@ -15,13 +15,13 @@ runConfig:
 # Google Cloud Secret Manager and be referenced with `secret:` below.
 env:
   - variable: NEXT_PUBLIC_SUPABASE_URL
-    value: ""        # paste your Supabase project URL (https://<ref>.supabase.co)
+    value: "https://jkkrcgonohyvttnpeytl.supabase.co"
     availability:
       - BUILD
       - RUNTIME
 
   - variable: NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
-    value: ""        # paste your Supabase anon/publishable key
+    value: "sb_publishable_k02wnR3bNiMcD7md2yiv_Q_whj0kEjT"
     availability:
       - BUILD
       - RUNTIME
