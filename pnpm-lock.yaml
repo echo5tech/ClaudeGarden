@@ -205,6 +205,9 @@ importers:
       '@garden/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@netlify/plugin-nextjs':
+        specifier: ^5.10.1
+        version: 5.15.11
       '@tailwindcss/postcss':
         specifier: ^4
         version: 4.3.0
@@ -1253,6 +1256,10 @@ packages:
     peerDependencies:
       '@emnapi/core': ^1.7.1
       '@emnapi/runtime': ^1.7.1
+
+  '@netlify/plugin-nextjs@5.15.11':
+    resolution: {integrity: sha512-cx7yoJFYDBFRecGqJaEUuvnHvU+vs9ISn7DUXyijPheaqtbyRy4+z7Mjre9swEJ19ItVeFhuGuXUkl6X5nfJeA==}
+    engines: {node: '>=18.0.0'}
 
   '@next/env@16.2.6':
     resolution: {integrity: sha512-gd8HoHN4ufj73WmR3JmVolrpJR47ILK6LouP5xElPglaVxir6e1a7VzvTvDWkOoPXT9rkkTzyCxBu4yeZfZwcw==}
@@ -6763,6 +6770,8 @@ snapshots:
       '@emnapi/runtime': 1.10.0
       '@tybys/wasm-util': 0.10.2
     optional: true
+
+  '@netlify/plugin-nextjs@5.15.11': {}
 
   '@next/env@16.2.6': {}
 
