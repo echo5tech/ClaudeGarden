@@ -20,8 +20,8 @@ import "@supabase/functions-js/edge-runtime.d.ts";
 import { withSupabase } from "@supabase/server";
 
 const PERENUAL = "https://perenual.com/api";
-const DETAIL_CONCURRENCY = 5;
-const MAX_RUN_MS = 100_000;
+const DETAIL_CONCURRENCY = 2;
+const MAX_RUN_MS = 30_000;
 
 // ── Perenual response types ───────────────────────────────────────────────────
 
