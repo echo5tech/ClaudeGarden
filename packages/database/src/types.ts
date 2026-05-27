@@ -192,6 +192,8 @@ export type Database = {
           spacing_inches: number | null
           sow_weeks_before_frost: number | null
           sun_exposure: string | null
+          trefle_id: number | null
+          usda_symbol: string | null
           water_needs: string | null
           zones: string[]
         }
@@ -210,6 +212,8 @@ export type Database = {
           spacing_inches?: number | null
           sow_weeks_before_frost?: number | null
           sun_exposure?: string | null
+          trefle_id?: number | null
+          usda_symbol?: string | null
           water_needs?: string | null
           zones?: string[]
         }
@@ -228,6 +232,8 @@ export type Database = {
           spacing_inches?: number | null
           sow_weeks_before_frost?: number | null
           sun_exposure?: string | null
+          trefle_id?: number | null
+          usda_symbol?: string | null
           water_needs?: string | null
           zones?: string[]
         }
