@@ -183,10 +183,16 @@ export type Database = {
           companion_plant_ids: string[]
           created_at: string
           days_to_harvest: number | null
+          direct_sow_weeks_after_frost: number | null
+          fertilizer_notes: string | null
           id: string
           permapeople_id: number | null
           scientific_name: string
+          soil_type: string | null
           spacing_inches: number | null
+          sow_weeks_before_frost: number | null
+          sun_exposure: string | null
+          water_needs: string | null
           zones: string[]
         }
         Insert: {
@@ -195,10 +201,16 @@ export type Database = {
           companion_plant_ids?: string[]
           created_at?: string
           days_to_harvest?: number | null
+          direct_sow_weeks_after_frost?: number | null
+          fertilizer_notes?: string | null
           id?: string
           permapeople_id?: number | null
           scientific_name: string
+          soil_type?: string | null
           spacing_inches?: number | null
+          sow_weeks_before_frost?: number | null
+          sun_exposure?: string | null
+          water_needs?: string | null
           zones?: string[]
         }
         Update: {
@@ -207,10 +219,16 @@ export type Database = {
           companion_plant_ids?: string[]
           created_at?: string
           days_to_harvest?: number | null
+          direct_sow_weeks_after_frost?: number | null
+          fertilizer_notes?: string | null
           id?: string
           permapeople_id?: number | null
           scientific_name?: string
+          soil_type?: string | null
           spacing_inches?: number | null
+          sow_weeks_before_frost?: number | null
+          sun_exposure?: string | null
+          water_needs?: string | null
           zones?: string[]
         }
         Relationships: []
@@ -325,6 +343,153 @@ export type Database = {
           },
           {
             foreignKeyName: "tasks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          role: string
+          session_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          role: string
+          session_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          role?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "chat_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_sessions: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      device_tokens: {
+        Row: {
+          platform: string
+          token: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          platform: string
+          token: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          platform?: string
+          token?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_tokens_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      hardiness_zones: {
+        Row: {
+          first_frost_date: string | null
+          last_frost_date: string | null
+          zone: string
+        }
+        Insert: {
+          first_frost_date?: string | null
+          last_frost_date?: string | null
+          zone: string
+        }
+        Update: {
+          first_frost_date?: string | null
+          last_frost_date?: string | null
+          zone?: string
+        }
+        Relationships: []
+      }
+      plant_photos: {
+        Row: {
+          bed_plant_id: string
+          caption: string | null
+          id: string
+          storage_path: string
+          taken_at: string
+          user_id: string
+        }
+        Insert: {
+          bed_plant_id: string
+          caption?: string | null
+          id?: string
+          storage_path: string
+          taken_at?: string
+          user_id: string
+        }
+        Update: {
+          bed_plant_id?: string
+          caption?: string | null
+          id?: string
+          storage_path?: string
+          taken_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plant_photos_bed_plant_id_fkey"
+            columns: ["bed_plant_id"]
+            isOneToOne: false
+            referencedRelation: "bed_plants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plant_photos_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
