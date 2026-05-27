@@ -3,7 +3,7 @@
 -- The send-push Edge Function reads this table (service-role bypass).
 
 CREATE TABLE device_tokens (
-  user_id     uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  user_id     uuid NOT NULL REFERENCES profiles(user_id) ON DELETE CASCADE,
   platform    text NOT NULL CHECK (platform IN ('ios','android','web')),
   token       text NOT NULL,
   updated_at  timestamptz NOT NULL DEFAULT now(),
