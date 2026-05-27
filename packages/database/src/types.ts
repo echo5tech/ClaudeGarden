@@ -186,12 +186,15 @@ export type Database = {
           direct_sow_weeks_after_frost: number | null
           fertilizer_notes: string | null
           id: string
+          perenual_id: number | null
           permapeople_id: number | null
           scientific_name: string
           soil_type: string | null
           spacing_inches: number | null
           sow_weeks_before_frost: number | null
           sun_exposure: string | null
+          trefle_id: number | null
+          usda_symbol: string | null
           water_needs: string | null
           zones: string[]
         }
@@ -204,12 +207,15 @@ export type Database = {
           direct_sow_weeks_after_frost?: number | null
           fertilizer_notes?: string | null
           id?: string
+          perenual_id?: number | null
           permapeople_id?: number | null
           scientific_name: string
           soil_type?: string | null
           spacing_inches?: number | null
           sow_weeks_before_frost?: number | null
           sun_exposure?: string | null
+          trefle_id?: number | null
+          usda_symbol?: string | null
           water_needs?: string | null
           zones?: string[]
         }
@@ -222,12 +228,15 @@ export type Database = {
           direct_sow_weeks_after_frost?: number | null
           fertilizer_notes?: string | null
           id?: string
+          perenual_id?: number | null
           permapeople_id?: number | null
           scientific_name?: string
           soil_type?: string | null
           spacing_inches?: number | null
           sow_weeks_before_frost?: number | null
           sun_exposure?: string | null
+          trefle_id?: number | null
+          usda_symbol?: string | null
           water_needs?: string | null
           zones?: string[]
         }
