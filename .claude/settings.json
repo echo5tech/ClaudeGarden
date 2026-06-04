@@ -1,0 +1,7 @@
+{
+  "comments": [
+    "Do not add Claude authoring attribution, \"Claude-powered\", or similar references in code comments or documentation.",
+    "Maintain neutrality regarding AI assistance - focus on what the code does, not who built it.",
+    "Any AI references should be generic (e.g., \"AI-powered\") rather than service-specific."
+  ]
+}

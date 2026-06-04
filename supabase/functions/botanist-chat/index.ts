@@ -1,4 +1,4 @@
-// botanist-chat: Claude-powered gardening assistant with streaming SSE responses.
+// botanist-chat: AI-powered gardening assistant with streaming SSE responses.
 //
 // Request: POST { message: string, session_id?: string }
 // Auth: Bearer JWT (verified manually — verify_jwt: false in config.json)
