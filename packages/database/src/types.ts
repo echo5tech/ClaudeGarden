@@ -111,254 +111,6 @@ export type Database = {
           },
         ]
       }
-      follows: {
-        Row: {
-          created_at: string
-          followee_id: string
-          follower_id: string
-        }
-        Insert: {
-          created_at?: string
-          followee_id: string
-          follower_id: string
-        }
-        Update: {
-          created_at?: string
-          followee_id?: string
-          follower_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "follows_followee_id_fkey"
-            columns: ["followee_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "follows_follower_id_fkey"
-            columns: ["follower_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
-          },
-        ]
-      }
-      gardens: {
-        Row: {
-          created_at: string
-          id: string
-          name: string
-          user_id: string
-          visibility: Database["public"]["Enums"]["visibility"]
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          name: string
-          user_id: string
-          visibility?: Database["public"]["Enums"]["visibility"]
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          name?: string
-          user_id?: string
-          visibility?: Database["public"]["Enums"]["visibility"]
-        }
-        Relationships: [
-          {
-            foreignKeyName: "gardens_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
-          },
-        ]
-      }
-      plants: {
-        Row: {
-          antagonist_plant_ids: string[]
-          common_name: string
-          companion_plant_ids: string[]
-          created_at: string
-          days_to_harvest: number | null
-          direct_sow_weeks_after_frost: number | null
-          fertilizer_notes: string | null
-          id: string
-          perenual_id: number | null
-          permapeople_id: number | null
-          scientific_name: string
-          soil_type: string | null
-          spacing_inches: number | null
-          sow_weeks_before_frost: number | null
-          sun_exposure: string | null
-          trefle_id: number | null
-          usda_symbol: string | null
-          water_needs: string | null
-          zones: string[]
-        }
-        Insert: {
-          antagonist_plant_ids?: string[]
-          common_name: string
-          companion_plant_ids?: string[]
-          created_at?: string
-          days_to_harvest?: number | null
-          direct_sow_weeks_after_frost?: number | null
-          fertilizer_notes?: string | null
-          id?: string
-          perenual_id?: number | null
-          permapeople_id?: number | null
-          scientific_name: string
-          soil_type?: string | null
-          spacing_inches?: number | null
-          sow_weeks_before_frost?: number | null
-          sun_exposure?: string | null
-          trefle_id?: number | null
-          usda_symbol?: string | null
-          water_needs?: string | null
-          zones?: string[]
-        }
-        Update: {
-          antagonist_plant_ids?: string[]
-          common_name?: string
-          companion_plant_ids?: string[]
-          created_at?: string
-          days_to_harvest?: number | null
-          direct_sow_weeks_after_frost?: number | null
-          fertilizer_notes?: string | null
-          id?: string
-          perenual_id?: number | null
-          permapeople_id?: number | null
-          scientific_name?: string
-          soil_type?: string | null
-          spacing_inches?: number | null
-          sow_weeks_before_frost?: number | null
-          sun_exposure?: string | null
-          trefle_id?: number | null
-          usda_symbol?: string | null
-          water_needs?: string | null
-          zones?: string[]
-        }
-        Relationships: []
-      }
-      posts: {
-        Row: {
-          body: string
-          created_at: string
-          garden_id: string | null
-          id: string
-          image_url: string | null
-          user_id: string
-        }
-        Insert: {
-          body: string
-          created_at?: string
-          garden_id?: string | null
-          id?: string
-          image_url?: string | null
-          user_id: string
-        }
-        Update: {
-          body?: string
-          created_at?: string
-          garden_id?: string | null
-          id?: string
-          image_url?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "posts_garden_id_fkey"
-            columns: ["garden_id"]
-            isOneToOne: false
-            referencedRelation: "gardens"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "posts_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
-          },
-        ]
-      }
-      profiles: {
-        Row: {
-          created_at: string
-          display_name: string
-          hardiness_zone: string | null
-          last_frost_date: string | null
-          updated_at: string
-          user_id: string
-          zip: string | null
-        }
-        Insert: {
-          created_at?: string
-          display_name: string
-          hardiness_zone?: string | null
-          last_frost_date?: string | null
-          updated_at?: string
-          user_id: string
-          zip?: string | null
-        }
-        Update: {
-          created_at?: string
-          display_name?: string
-          hardiness_zone?: string | null
-          last_frost_date?: string | null
-          updated_at?: string
-          user_id?: string
-          zip?: string | null
-        }
-        Relationships: []
-      }
-      tasks: {
-        Row: {
-          bed_plant_id: string
-          created_at: string
-          due_date: string
-          id: string
-          status: Database["public"]["Enums"]["task_status"]
-          task_type: Database["public"]["Enums"]["task_type"]
-          user_id: string
-        }
-        Insert: {
-          bed_plant_id: string
-          created_at?: string
-          due_date: string
-          id?: string
-          status?: Database["public"]["Enums"]["task_status"]
-          task_type: Database["public"]["Enums"]["task_type"]
-          user_id: string
-        }
-        Update: {
-          bed_plant_id?: string
-          created_at?: string
-          due_date?: string
-          id?: string
-          status?: Database["public"]["Enums"]["task_status"]
-          task_type?: Database["public"]["Enums"]["task_type"]
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tasks_bed_plant_id_fkey"
-            columns: ["bed_plant_id"]
-            isOneToOne: false
-            referencedRelation: "bed_plants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tasks_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
-          },
-        ]
-      }
       chat_messages: {
         Row: {
           content: string
@@ -446,6 +198,71 @@ export type Database = {
           },
         ]
       }
+      follows: {
+        Row: {
+          created_at: string
+          followee_id: string
+          follower_id: string
+        }
+        Insert: {
+          created_at?: string
+          followee_id: string
+          follower_id: string
+        }
+        Update: {
+          created_at?: string
+          followee_id?: string
+          follower_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follows_followee_id_fkey"
+            columns: ["followee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "follows_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      gardens: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          user_id: string
+          visibility: Database["public"]["Enums"]["visibility"]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          user_id: string
+          visibility?: Database["public"]["Enums"]["visibility"]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: string
+          visibility?: Database["public"]["Enums"]["visibility"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gardens_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       hardiness_zones: {
         Row: {
           first_frost_date: string | null
@@ -506,12 +323,214 @@ export type Database = {
           },
         ]
       }
+      plants: {
+        Row: {
+          antagonist_plant_ids: string[]
+          common_name: string
+          companion_plant_ids: string[]
+          created_at: string
+          days_to_harvest: number | null
+          direct_sow_weeks_after_frost: number | null
+          fertilizer_notes: string | null
+          id: string
+          perenual_id: number | null
+          permapeople_id: number | null
+          scientific_name: string
+          soil_type: string | null
+          sow_weeks_before_frost: number | null
+          spacing_inches: number | null
+          sun_exposure: string | null
+          trefle_id: number | null
+          usda_symbol: string | null
+          water_needs: string | null
+          zones: string[]
+        }
+        Insert: {
+          antagonist_plant_ids?: string[]
+          common_name: string
+          companion_plant_ids?: string[]
+          created_at?: string
+          days_to_harvest?: number | null
+          direct_sow_weeks_after_frost?: number | null
+          fertilizer_notes?: string | null
+          id?: string
+          perenual_id?: number | null
+          permapeople_id?: number | null
+          scientific_name: string
+          soil_type?: string | null
+          sow_weeks_before_frost?: number | null
+          spacing_inches?: number | null
+          sun_exposure?: string | null
+          trefle_id?: number | null
+          usda_symbol?: string | null
+          water_needs?: string | null
+          zones?: string[]
+        }
+        Update: {
+          antagonist_plant_ids?: string[]
+          common_name?: string
+          companion_plant_ids?: string[]
+          created_at?: string
+          days_to_harvest?: number | null
+          direct_sow_weeks_after_frost?: number | null
+          fertilizer_notes?: string | null
+          id?: string
+          perenual_id?: number | null
+          permapeople_id?: number | null
+          scientific_name?: string
+          soil_type?: string | null
+          sow_weeks_before_frost?: number | null
+          spacing_inches?: number | null
+          sun_exposure?: string | null
+          trefle_id?: number | null
+          usda_symbol?: string | null
+          water_needs?: string | null
+          zones?: string[]
+        }
+        Relationships: []
+      }
+      posts: {
+        Row: {
+          body: string
+          created_at: string
+          garden_id: string | null
+          id: string
+          image_url: string | null
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          garden_id?: string | null
+          id?: string
+          image_url?: string | null
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          garden_id?: string | null
+          id?: string
+          image_url?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "posts_garden_id_fkey"
+            columns: ["garden_id"]
+            isOneToOne: false
+            referencedRelation: "gardens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "posts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string
+          hardiness_zone: string | null
+          last_frost_date: string | null
+          updated_at: string
+          user_id: string
+          zip: string | null
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          hardiness_zone?: string | null
+          last_frost_date?: string | null
+          updated_at?: string
+          user_id: string
+          zip?: string | null
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          hardiness_zone?: string | null
+          last_frost_date?: string | null
+          updated_at?: string
+          user_id?: string
+          zip?: string | null
+        }
+        Relationships: []
+      }
+      sync_state: {
+        Row: {
+          next_page: number
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          next_page?: number
+          source: string
+          updated_at?: string
+        }
+        Update: {
+          next_page?: number
+          source?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          bed_plant_id: string
+          created_at: string
+          due_date: string
+          id: string
+          status: Database["public"]["Enums"]["task_status"]
+          task_type: Database["public"]["Enums"]["task_type"]
+          user_id: string
+        }
+        Insert: {
+          bed_plant_id: string
+          created_at?: string
+          due_date: string
+          id?: string
+          status?: Database["public"]["Enums"]["task_status"]
+          task_type: Database["public"]["Enums"]["task_type"]
+          user_id: string
+        }
+        Update: {
+          bed_plant_id?: string
+          created_at?: string
+          due_date?: string
+          id?: string
+          status?: Database["public"]["Enums"]["task_status"]
+          task_type?: Database["public"]["Enums"]["task_type"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_bed_plant_id_fkey"
+            columns: ["bed_plant_id"]
+            isOneToOne: false
+            referencedRelation: "bed_plants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
       generate_daily_tasks: { Args: never; Returns: undefined }
+      invoke_edge_function: { Args: { function_name: string }; Returns: number }
     }
     Enums: {
       task_status: "pending" | "done" | "skipped"

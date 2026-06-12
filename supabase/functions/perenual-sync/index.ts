@@ -11,7 +11,10 @@
 // + care guide for each record, then upsert by perenual_id. Designed for
 // incremental runs — one invocation processes one list page (30 plants) and
 // returns { done, resumeWith } so pg_cron or a manual caller can chain pages
-// without hitting the 150 s Edge Function timeout.
+// without hitting the 150 s Edge Function timeout. When the body omits
+// "page", the function resumes from the sync_state table (source =
+// 'perenual') and persists its progress there, so a nightly pg_cron job with
+// body {} advances through the catalog and wraps around to page 1 when done.
 //
 // Secrets: PERENUAL_KEY  (set in Supabase dashboard → Edge Functions → Secrets)
 // Invoke:  POST /perenual-sync  with body { "page": 1 }  (default page 1)
@@ -288,7 +291,16 @@ export default {
     }
 
     const body = await req.json().catch(() => ({})) as { page?: number };
-    const startPage = Math.max(1, body.page ?? 1);
+    let startPage = body.page;
+    if (startPage == null) {
+      const { data: state } = await ctx.supabaseAdmin
+        .from("sync_state")
+        .select("next_page")
+        .eq("source", "perenual")
+        .maybeSingle();
+      startPage = state?.next_page ?? 1;
+    }
+    startPage = Math.max(1, startPage);
 
     const startedAt = Date.now();
     let currentPage = startPage;
@@ -336,6 +348,17 @@ export default {
     }
 
     const done = !hasMore;
+
+    // Persist progress so the next body-{} invocation resumes (or restarts).
+    await ctx.supabaseAdmin.from("sync_state").upsert(
+      {
+        source: "perenual",
+        next_page: done ? 1 : currentPage,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "source" },
+    );
+
     return Response.json({
       status: done ? "ok" : "partial",
       upserted: totalUpserted,

@@ -10,8 +10,10 @@
 // Invoke:  POST /trefle-sync  with body { "page": 1 }  (default page 1)
 //
 // To run a full sync, keep calling with the returned resumeWith.page until
-// done === true. A pg_cron job running every 10 minutes with page stored in
-// a config table is the typical production pattern.
+// done === true. When the body omits "page", the function resumes from the
+// sync_state table (source = 'trefle') and persists its progress there, so a
+// nightly pg_cron job with body {} advances through the catalog and wraps
+// around to page 1 when done.
 
 import "@supabase/functions-js/edge-runtime.d.ts";
 import { withSupabase } from "@supabase/server";
@@ -257,7 +259,16 @@ export default {
     }
 
     const body = await req.json().catch(() => ({})) as { page?: number };
-    const startPage = Math.max(1, body.page ?? 1);
+    let startPage = body.page;
+    if (startPage == null) {
+      const { data: state } = await ctx.supabaseAdmin
+        .from("sync_state")
+        .select("next_page")
+        .eq("source", "trefle")
+        .maybeSingle();
+      startPage = state?.next_page ?? 1;
+    }
+    startPage = Math.max(1, startPage);
 
     const startedAt = Date.now();
     let currentPage = startPage;
@@ -297,6 +308,17 @@ export default {
     }
 
     const done = !hasMore;
+
+    // Persist progress so the next body-{} invocation resumes (or restarts).
+    await ctx.supabaseAdmin.from("sync_state").upsert(
+      {
+        source: "trefle",
+        next_page: done ? 1 : currentPage,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "source" },
+    );
+
     return Response.json({
       status: done ? "ok" : "partial",
       upserted: totalUpserted,
