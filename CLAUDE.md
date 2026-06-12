@@ -28,6 +28,7 @@ pnpm mobile                   # apps/mobile only (Expo dev server)
 pnpm build                    # turbo build all apps
 pnpm check-types              # turbo tsc --noEmit across the workspace
 pnpm lint                     # turbo lint across the workspace
+pnpm test                     # turbo test (Vitest unit tests in packages/shared)
 
 pnpm db:start                 # boot local Supabase stack (Docker required)
 pnpm db:stop                  # stop the stack
@@ -88,12 +89,36 @@ The social model is **one-way follows** (Twitter-style, not mutual friendships �
 When adding tables, **always enable RLS in the same migration** and write policies before merging.
 
 ### Reminder pipeline
-`generate_daily_tasks()` (PL/pgSQL, declared in `*_pg_cron.sql`) runs at 06:00 UTC daily. It inserts water/harvest tasks idempotently via `ON CONFLICT` against the `(bed_plant_id, task_type, due_date)` unique constraint. After insertion, the `send-push` Edge Function fans out Expo push notifications.
+`generate_daily_tasks()` (PL/pgSQL, declared in `*_pg_cron.sql`) runs at 06:00 UTC daily. It inserts water/harvest tasks idempotently via `ON CONFLICT` against the `(bed_plant_id, task_type, due_date)` unique constraint. At 06:15 UTC a second cron job calls `public.invoke_edge_function('send-push')` (pg_net HTTP POST), which sends one summary Expo push per device to every user with pending due tasks. `send-push` also accepts `{ "user_id": "…" }` for single-user testing (per-task notifications).
 
-The `device_tokens` table does **not** exist yet — `send-push` has a TODO marker. Add it via a new migration when wiring up mobile push registration. Expo push tokens are obtained via `expo-notifications` in `apps/mobile`.
+Mobile registers Expo push tokens into the `device_tokens` table via `apps/mobile/src/hooks/use-push-registration.ts` (requires a real EAS `projectId` in `app.json` → `extra.eas.projectId`).
 
-### Permapeople sync
-`supabase/functions/permapeople-sync/index.ts` upserts the public plant catalog nightly. Credentials live in `PERMAPEOPLE_KEY_ID` / `PERMAPEOPLE_KEY_SECRET` Edge Function secrets. The transformer logic is duplicated inline from `packages/shared/src/permapeople/` because Deno can't resolve workspace packages — keep both in sync until we publish `@garden/shared` to a Deno-friendly registry.
+**Per-environment setup (one-time):** the cron→function bridge reads two Vault secrets. Run in the SQL editor:
+```sql
+select vault.create_secret('https://<project-ref>.supabase.co', 'project_url');
+select vault.create_secret('sb_secret_...', 'secret_key');
+```
+Locally use `http://host.docker.internal:54321` as `project_url`. Until the secrets exist, the cron jobs fail harmlessly (see `cron.job_run_details`).
+
+### Plant catalog syncs
+Three Edge Functions upsert the public `plants` catalog nightly via pg_cron (all use the same `invoke_edge_function` Vault pattern):
+
+| Function | Schedule (UTC) | Secrets | Paging |
+|---|---|---|---|
+| `permapeople-sync` | 03:00 | `PERMAPEOPLE_KEY_ID` / `PERMAPEOPLE_KEY_SECRET` | all pages in one call |
+| `trefle-sync` | 03:30 | `TREFLE_TOKEN` | incremental, resumes via `sync_state` |
+| `perenual-sync` | 04:00 | `PERENUAL_KEY` | incremental, resumes via `sync_state` |
+
+The incremental syncs process ~100 s of pages per run, persist their cursor in the `sync_state` table (service-role only; RLS with no policies), and wrap back to page 1 when done. Passing `{ "page": N }` in the body overrides the cursor for manual runs.
+
+The Permapeople transformer logic is duplicated inline from `packages/shared/src/permapeople/` because Deno can't resolve workspace packages — keep both in sync until we publish `@garden/shared` to a Deno-friendly registry.
+
+## Deployment
+
+- **Web → Netlify** (canonical; root `netlify.toml`). `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` must be set in the Netlify UI with the *Builds* scope. Firebase App Hosting configs were removed in June 2026 — do not re-add them.
+- **Mobile → EAS** internal/TestFlight (`apps/mobile/eas.json`; profiles: development / preview / production). Before the first build: run `eas init` to replace the `REPLACE_WITH_EAS_PROJECT_ID` placeholder in `app.json`, then `eas credentials` for the APNs key / Android keystore. Build with `eas build --profile preview`. Store listings are deferred until full release.
+- **Backend → Supabase** hosted project. Deploy functions with `supabase functions deploy <name>`; set function secrets (`PERMAPEOPLE_KEY_*`, `TREFLE_TOKEN`, `PERENUAL_KEY`, `ANTHROPIC_API_KEY`) in the dashboard, and create the two Vault secrets (see Reminder pipeline) once per environment.
+- **CI → GitHub Actions** (`.github/workflows/ci.yml`): lint, typecheck, unit tests, build, plus a `supabase db start` + `db lint` job that proves migrations apply from scratch.
 
 ## Conventions
 
@@ -110,3 +135,5 @@ The `device_tokens` table does **not** exist yet — `send-push` has a TODO mark
 - Forgetting to enable RLS on a new table. Default-deny means the table looks empty to every authed user until policies exist.
 - Two `supabase migration new` calls in the same second collide on timestamp; reorder by renaming if migration ordering matters.
 - Importing from `@garden/shared` inside `supabase/functions/*` — Deno doesn't resolve workspace packages. Duplicate the logic inline, with a comment noting the source-of-truth.
+- Forgetting the per-environment Vault secrets (`project_url`, `secret_key`) — every scheduled Edge Function invocation silently fails until they exist (check `cron.job_run_details`).
+- The dormant `hardiness_zones` reference table is seeded with 2027-anchored frost dates and has no consumers — clients compute frost dates via `nextLastFrostDate()` in `@garden/shared/zone`. If you add a consumer, fix the table's dates in a new migration first.
