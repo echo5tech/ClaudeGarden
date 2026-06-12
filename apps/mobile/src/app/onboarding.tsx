@@ -3,6 +3,8 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'reac
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
+import { ZONE_LAST_FROST_MMDD, nextLastFrostDate } from '@garden/shared';
+
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
@@ -26,31 +28,12 @@ const ZONES = [
 
 type Zone = (typeof ZONES)[number];
 
-/** Last frost date by zone, using year 2027. Null means frost-free. */
-const FROST_DATE: Record<Zone, string | null> = {
-  '1a':  '2027-06-15',
-  '1b':  '2027-06-01',
-  '2a':  '2027-05-15',
-  '2b':  '2027-05-01',
-  '3a':  '2027-05-01',
-  '3b':  '2027-04-15',
-  '4a':  '2027-04-15',
-  '4b':  '2027-04-01',
-  '5a':  '2027-04-01',
-  '5b':  '2027-03-30',
-  '6a':  '2027-03-15',
-  '6b':  '2027-03-15',
-  '7a':  '2027-03-01',
-  '7b':  '2027-03-01',
-  '8a':  '2027-02-15',
-  '8b':  '2027-02-01',
-  '9a':  '2027-02-01',
-  '9b':  '2027-01-15',
-  '10a': null,
-  '10b': null,
-  '11a': null,
-  '12a': null,
-};
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function formatMmdd(mmdd: string): string {
+  const [mm, dd] = mmdd.split('-');
+  return `${MONTHS[parseInt(mm, 10) - 1]} ${parseInt(dd, 10)}`;
+}
 
 export default function OnboardingScreen() {
   const router = useRouter();
@@ -79,7 +62,7 @@ export default function OnboardingScreen() {
       .from('profiles')
       .update({
         hardiness_zone: selected,
-        last_frost_date: FROST_DATE[selected],
+        last_frost_date: nextLastFrostDate(selected, new Date()),
       })
       .eq('user_id', user.id);
 
@@ -129,7 +112,9 @@ export default function OnboardingScreen() {
                   style={styles.zoneRow}>
                   <ThemedText type="smallBold">Zone {zone.toUpperCase()}</ThemedText>
                   <ThemedText type="small" themeColor="textSecondary">
-                    {FROST_DATE[zone] ? `Last frost ~${FROST_DATE[zone]}` : 'Frost-free'}
+                    {ZONE_LAST_FROST_MMDD[zone]
+                      ? `Last frost ~${formatMmdd(ZONE_LAST_FROST_MMDD[zone])}`
+                      : 'Frost-free'}
                   </ThemedText>
                 </ThemedView>
               </Pressable>

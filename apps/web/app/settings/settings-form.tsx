@@ -11,10 +11,10 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import { ZONE_LAST_FROST_MMDD } from "@garden/shared";
 import {
   updateDisplayName,
   updateZone,
-  ZONE_FROST_MAP,
   type ActionResult,
 } from "./actions";
 
@@ -115,7 +115,7 @@ export function SettingsForm({ profile }: { profile: Profile }) {
                   Select a zone…
                 </option>
                 {USDA_ZONES.map((zone) => {
-                  const mmdd = ZONE_FROST_MAP[zone];
+                  const mmdd = ZONE_LAST_FROST_MMDD[zone];
                   const label = mmdd
                     ? `Zone ${zone} — last frost ~${formatFrostDate(mmdd)}`
                     : `Zone ${zone} — frost-free`;

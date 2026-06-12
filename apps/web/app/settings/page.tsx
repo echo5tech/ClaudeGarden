@@ -1,5 +1,14 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { signOut } from "@/app/auth/actions";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { SettingsForm } from "./settings-form";
 
 export const metadata = {
@@ -35,6 +44,20 @@ export default async function SettingsPage() {
     <main className="max-w-xl mx-auto px-4 py-10">
       <h1 className="text-2xl font-semibold tracking-tight mb-6">Settings</h1>
       <SettingsForm profile={safeProfile} />
+
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Account</CardTitle>
+          <CardDescription>Signed in as {user.email}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form action={signOut}>
+            <Button type="submit" variant="destructive">
+              Sign out
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </main>
   );
 }

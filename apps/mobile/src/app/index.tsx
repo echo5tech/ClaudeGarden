@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, StyleSheet } from "react-native";
+import {
+  ActivityIndicator,
+  FlatList,
+  Platform,
+  Pressable,
+  StyleSheet,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
@@ -17,6 +24,24 @@ type Plant = {
 export default function HomeScreen() {
   const [plants, setPlants] = useState<Plant[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [signingOut, setSigningOut] = useState(false);
+
+  async function handleSignOut() {
+    setSigningOut(true);
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user) {
+      // Best-effort: stop push notifications to this signed-out device.
+      await supabase
+        .from("device_tokens")
+        .delete()
+        .match({ user_id: user.id, platform: Platform.OS });
+    }
+    await supabase.auth.signOut();
+    // The SIGNED_OUT listener in _layout.tsx redirects to /auth.
+    setSigningOut(false);
+  }
 
   useEffect(() => {
     supabase
@@ -32,7 +57,19 @@ export default function HomeScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ThemedText type="title">WeGarden</ThemedText>
+        <View style={styles.headerRow}>
+          <ThemedText type="title">WeGarden</ThemedText>
+          <Pressable
+            onPress={handleSignOut}
+            disabled={signingOut}
+            accessibilityRole="button"
+            accessibilityLabel="Sign out"
+            style={({ pressed }) => ({ opacity: pressed || signingOut ? 0.6 : 1 })}>
+            <ThemedText type="linkPrimary">
+              {signingOut ? "Signing out…" : "Sign out"}
+            </ThemedText>
+          </Pressable>
+        </View>
         <ThemedText type="small">Plant catalog · Supabase smoke test</ThemedText>
 
         {error && (
@@ -72,6 +109,11 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
     maxWidth: MaxContentWidth,
     width: "100%",
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   list: { flex: 1 },
   row: {

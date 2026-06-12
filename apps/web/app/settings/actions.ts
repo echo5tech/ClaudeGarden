@@ -1,37 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { ZONE_LAST_FROST_MMDD, nextLastFrostDate } from "@garden/shared";
 import { createClient } from "@/lib/supabase/server";
-
-// Map of USDA hardiness zones to last frost date (MM-DD). null = frost-free.
-const ZONE_FROST_MAP: Record<string, string | null> = {
-  "1a": "06-15",
-  "1b": "06-01",
-  "2a": "05-15",
-  "2b": "05-01",
-  "3a": "05-01",
-  "3b": "04-15",
-  "4a": "04-15",
-  "4b": "04-01",
-  "5a": "04-01",
-  "5b": "03-30",
-  "6a": "03-15",
-  "6b": "03-15",
-  "7a": "03-01",
-  "7b": "03-01",
-  "8a": "02-15",
-  "8b": "02-01",
-  "9a": "02-01",
-  "9b": "01-15",
-  "10a": null,
-  "10b": null,
-  "11a": null,
-  "11b": null,
-  "12a": null,
-  "12b": null,
-  "13a": null,
-  "13b": null,
-};
 
 export interface ActionResult {
   error?: string;
@@ -78,7 +49,7 @@ export async function updateZone(
     return { error: "Please select a zone." };
   }
 
-  if (!(zone in ZONE_FROST_MAP)) {
+  if (!(zone in ZONE_LAST_FROST_MMDD)) {
     return { error: "Invalid zone." };
   }
 
@@ -91,11 +62,8 @@ export async function updateZone(
     return { error: "Not authenticated." };
   }
 
-  const mmdd = ZONE_FROST_MAP[zone];
-  // Use next calendar year for last_frost_date so it's always in the future
-  // (today is 2026-05-25 per system context)
-  const year = 2027;
-  const lastFrostDate = mmdd ? `${year}-${mmdd}` : null;
+  // Next future occurrence of the zone's last-frost date (null = frost-free).
+  const lastFrostDate = nextLastFrostDate(zone, new Date());
 
   const { error } = await supabase
     .from("profiles")
@@ -112,5 +80,3 @@ export async function updateZone(
   revalidatePath("/settings");
   return { success: true };
 }
-
-export { ZONE_FROST_MAP };
