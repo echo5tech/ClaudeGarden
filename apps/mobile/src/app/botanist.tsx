@@ -40,6 +40,32 @@ export default function BotanistScreen() {
     }
   }, [messages]);
 
+  function processSSELine(line: string, assistantMsgId: string) {
+    if (!line.startsWith('data: ')) return;
+    const raw = line.slice('data: '.length).trim();
+    if (!raw) return;
+    try {
+      const event = JSON.parse(raw) as {
+        type: string;
+        session_id?: string;
+        text?: string;
+      };
+      if (event.type === 'session_id' && event.session_id) {
+        setSessionId(event.session_id);
+      } else if (event.type === 'delta' && event.text) {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantMsgId
+              ? { ...m, content: m.content + event.text! }
+              : m,
+          ),
+        );
+      }
+    } catch {
+      // Ignore malformed lines
+    }
+  }
+
   const sendMessage = useCallback(async () => {
     const trimmed = input.trim();
     if (!trimmed || isStreaming) return;
@@ -120,32 +146,6 @@ export default function BotanistScreen() {
       setIsStreaming(false);
     }
   }, [input, isStreaming, sessionId]);
-
-  function processSSELine(line: string, assistantMsgId: string) {
-    if (!line.startsWith('data: ')) return;
-    const raw = line.slice('data: '.length).trim();
-    if (!raw) return;
-    try {
-      const event = JSON.parse(raw) as {
-        type: string;
-        session_id?: string;
-        text?: string;
-      };
-      if (event.type === 'session_id' && event.session_id) {
-        setSessionId(event.session_id);
-      } else if (event.type === 'delta' && event.text) {
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === assistantMsgId
-              ? { ...m, content: m.content + event.text! }
-              : m,
-          ),
-        );
-      }
-    } catch {
-      // Ignore malformed lines
-    }
-  }
 
   const renderMessage = ({ item }: { item: Message }) => {
     const isUser = item.role === 'user';

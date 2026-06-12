@@ -60,7 +60,10 @@ export default function GardensScreen() {
 
   // Initial load
   useEffect(() => {
-    fetchGardens().finally(() => setLoading(false));
+    void (async () => {
+      await fetchGardens();
+      setLoading(false);
+    })();
   }, [fetchGardens]);
 
   const handleRefresh = useCallback(async () => {

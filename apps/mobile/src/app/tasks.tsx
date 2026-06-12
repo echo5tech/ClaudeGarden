@@ -95,7 +95,10 @@ export default function TasksScreen() {
   }, []);
 
   useEffect(() => {
-    fetchTasks().finally(() => setLoading(false));
+    void (async () => {
+      await fetchTasks();
+      setLoading(false);
+    })();
 
     // Realtime subscription for new tasks being inserted
     const channel = supabase

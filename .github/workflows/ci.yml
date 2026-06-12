@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    env:
+      # Dummy values so `next build` can inline them; pages fall back to demo
+      # data when Supabase is unreachable, so validity is not required.
+      NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_dummy
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4 # version read from packageManager field
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # expo-router typed routes live in untracked .expo/types — generate them
+      # so the mobile typecheck runs against strict route types.
+      - name: Generate Expo typed routes
+        run: npx expo customize tsconfig.json
+        working-directory: apps/mobile
+
+      - run: pnpm lint
+
+      - run: pnpm check-types
+
+      - run: pnpm test
+
+      - run: pnpm build
+
+  db-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # Boots local Postgres and applies every migration — doubles as a
+      # "migrations apply cleanly from scratch" gate.
+      - run: supabase db start
+
+      - run: supabase db lint

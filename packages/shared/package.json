@@ -14,7 +14,8 @@
   },
   "scripts": {
     "check-types": "tsc --noEmit",
-    "lint": "echo 'no lint configured'"
+    "lint": "echo 'no lint configured'",
+    "test": "vitest run"
   },
   "dependencies": {
     "@garden/database": "workspace:*",
@@ -22,6 +23,7 @@
   },
   "devDependencies": {
     "@garden/config": "workspace:*",
-    "typescript": "5.9.2"
+    "typescript": "5.9.2",
+    "vitest": "^3.2.4"
   }
 }

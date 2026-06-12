@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -16,7 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, Colors, MaxContentWidth, Spacing } from '@/constants/theme';
+import { BottomTabInset, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { supabase } from '@/lib/supabase';
 
@@ -314,7 +314,6 @@ export default function JournalScreen() {
   const [showUpload, setShowUpload] = useState(false);
 
   const fetchPhotos = useCallback(async () => {
-    setLoading(true);
     const { data } = await supabase
       .from('plant_photos')
       .select(
@@ -344,7 +343,9 @@ export default function JournalScreen() {
   }, []);
 
   useEffect(() => {
-    fetchPhotos();
+    void (async () => {
+      await fetchPhotos();
+    })();
   }, [fetchPhotos]);
 
   return (
@@ -365,7 +366,7 @@ export default function JournalScreen() {
             <ThemedText style={styles.emptyEmoji}>📷</ThemedText>
             <ThemedText type="subtitle" style={styles.emptyTitle}>No photos yet</ThemedText>
             <ThemedText type="small" themeColor="textSecondary" style={styles.emptyBody}>
-              Start documenting your garden journey. Tap '+' to add your first photo.
+              Start documenting your garden journey. Tap &apos;+&apos; to add your first photo.
             </ThemedText>
           </View>
         )}
