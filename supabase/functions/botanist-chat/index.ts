@@ -12,6 +12,9 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY")!;
 
+// Each request is an LLM call on our API key — cap per-user volume.
+const DAILY_MESSAGE_LIMIT = 50;
+
 function sseEvent(data: unknown): Uint8Array {
   return new TextEncoder().encode(`data: ${JSON.stringify(data)}\n\n`);
 }
@@ -59,6 +62,21 @@ Deno.serve(async (req: Request) => {
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user) {
     return new Response("Unauthorized", { status: 401 });
+  }
+
+  // Rate limit: count this user's messages over the last 24 h (RLS already
+  // scopes chat_messages to their own sessions).
+  const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const { count: recentCount } = await supabase
+    .from("chat_messages")
+    .select("*", { count: "exact", head: true })
+    .eq("role", "user")
+    .gte("created_at", dayAgo);
+  if ((recentCount ?? 0) >= DAILY_MESSAGE_LIMIT) {
+    return new Response(
+      "Daily message limit reached — the botanist will be back tomorrow.",
+      { status: 429 },
+    );
   }
 
   // Get or create session
@@ -142,14 +160,6 @@ User context:
 
 Answer gardening questions with actionable, specific advice. When giving planting timing advice, account for the user's zone and frost dates. Keep responses concise (2–4 paragraphs max). Use plain text, no markdown.`;
 
-  // Save user message before streaming
-  const { error: insertUserMsgError } = await supabase
-    .from("chat_messages")
-    .insert({ session_id: sessionId, role: "user", content: message.trim() });
-  if (insertUserMsgError) {
-    return new Response("Failed to save message", { status: 500 });
-  }
-
   // Stream response
   const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
 
@@ -168,6 +178,12 @@ Answer gardening questions with actionable, specific advice. When giving plantin
             { role: "user", content: message.trim() },
           ],
         });
+
+        // Persist the user turn only once the model call is underway, so a
+        // failed request doesn't leave an unanswered message in history.
+        await supabase
+          .from("chat_messages")
+          .insert({ session_id: sessionId, role: "user", content: message.trim() });
 
         let fullResponse = "";
 

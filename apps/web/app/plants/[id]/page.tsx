@@ -57,21 +57,16 @@ export default async function PlantDetailPage({
   const companions: Array<{ id: string; common_name: string }> = [];
   const antagonists: Array<{ id: string; common_name: string }> = [];
 
-  if (plant.companion_plant_ids?.length > 0) {
-    const { data } = await supabase
-      .from("plants")
-      .select("id, common_name")
-      .in("id", plant.companion_plant_ids);
-    if (data) companions.push(...data);
-  }
-
-  if (plant.antagonist_plant_ids?.length > 0) {
-    const { data } = await supabase
-      .from("plants")
-      .select("id, common_name")
-      .in("id", plant.antagonist_plant_ids);
-    if (data) antagonists.push(...data);
-  }
+  const [companionsRes, antagonistsRes] = await Promise.all([
+    plant.companion_plant_ids?.length > 0
+      ? supabase.from("plants").select("id, common_name").in("id", plant.companion_plant_ids)
+      : Promise.resolve({ data: null }),
+    plant.antagonist_plant_ids?.length > 0
+      ? supabase.from("plants").select("id, common_name").in("id", plant.antagonist_plant_ids)
+      : Promise.resolve({ data: null }),
+  ]);
+  if (companionsRes.data) companions.push(...companionsRes.data);
+  if (antagonistsRes.data) antagonists.push(...antagonistsRes.data);
 
   const sowNote =
     plant.sow_weeks_before_frost != null

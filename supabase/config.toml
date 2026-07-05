@@ -454,4 +454,10 @@ entrypoint = "./functions/trefle-sync/index.ts"
 enabled = true
 verify_jwt = false
 import_map = "./functions/perenual-sync/deno.json"
+
+[functions.botanist-chat]
+enabled = true
+# JWT is verified manually inside the function (it forwards the caller's
+# token to PostgREST so RLS applies).
+verify_jwt = false
 entrypoint = "./functions/perenual-sync/index.ts"

@@ -338,24 +338,6 @@ export type Database = {
           },
         ]
       }
-      hardiness_zones: {
-        Row: {
-          first_frost_date: string | null
-          last_frost_date: string | null
-          zone: string
-        }
-        Insert: {
-          first_frost_date?: string | null
-          last_frost_date?: string | null
-          zone: string
-        }
-        Update: {
-          first_frost_date?: string | null
-          last_frost_date?: string | null
-          zone?: string
-        }
-        Relationships: []
-      }
       likes: {
         Row: {
           created_at: string

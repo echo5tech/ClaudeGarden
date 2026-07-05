@@ -1,159 +1,45 @@
-# Turborepo starter
+# WeGarden 🌱
 
-This Turborepo starter is maintained by the Turborepo core team.
+A cross-platform gardening app that answers three questions: **What should I plant now? How do I arrange it? How do I share it?**
 
-## Using this example
+- **Plan** — a drag-and-drop bed designer with to-scale spacing rings and conflict detection.
+- **Grow** — water/sow/harvest reminders generated from your USDA zone, frost dates, and each plant's real cadence, pushed to your phone on your local clock.
+- **Share** — a social layer: follow gardeners, post progress photos, like and comment, browse public gardens.
+- **Ask** — an AI botanist chat that knows your zone, frost window, and what you're growing.
 
-Run the following command:
+## Surfaces
 
-```sh
-npx create-turbo@latest
+| App | Stack | Highlights |
+|---|---|---|
+| `apps/web` | Next.js 16, Tailwind 4, shadcn/ui, dnd-kit | Bed designer, home feed, profiles, plant catalog, calendar |
+| `apps/mobile` | Expo SDK 56, expo-router | Daily reminder push, camera photo journal, feed + composer |
+| `supabase/` | Postgres + RLS, Edge Functions, pg_cron | Auth, social-graph row security, task generation, 3-source plant catalog sync |
+
+## Getting started
+
+```bash
+pnpm install          # install workspace deps
+pnpm db:start         # boot local Supabase (Docker required)
+pnpm db:reset         # apply migrations + seed
+pnpm web              # Next.js dev server on :3000
+pnpm mobile           # Expo dev server
 ```
 
-## What's inside?
+Copy `.env.example` into `apps/web/.env.local` and `apps/mobile/.env`, filling values from the `supabase start` output.
 
-This Turborepo includes the following packages/apps:
+Quality gates: `pnpm lint && pnpm check-types && pnpm test && pnpm build`.
 
-### Apps and Packages
+## Architecture
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+Postgres is the single source of truth. Migrations live in `supabase/migrations/`; regenerate `packages/database/src/types.ts` with `pnpm db:types` after schema changes (never hand-edit it). Domain logic (frost dates, task cadence, spacing geometry, Zod schemas) is shared across web and mobile via `@garden/shared`.
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+Row-level security is the authorization model — the social graph (one-way follows, block-aware visibility, own-row tasks) is enforced in the database, not in app code.
 
-### Utilities
+Full architecture notes, conventions, and gotchas: see [CLAUDE.md](./CLAUDE.md).
 
-This Turborepo has some additional tools already setup for you:
+## Deployment
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo build
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo build
-pnpm dlx turbo build
-pnpm exec turbo build
-```
-
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo build --filter=docs
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
-
-### Develop
-
-To develop all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo dev
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo dev
-pnpm exec turbo dev
-pnpm exec turbo dev
-```
-
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo dev --filter=web
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-pnpm exec turbo login
-pnpm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-pnpm exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+- **Web** → Netlify (`netlify.toml`)
+- **Mobile** → EAS builds (`apps/mobile/eas.json`; run `eas init` once to set the project id)
+- **Backend** → Supabase hosted project (`supabase functions deploy <name>`, secrets in the dashboard, Vault secrets for the cron bridge)
+- **CI** → GitHub Actions: lint, typecheck, tests, builds, plus a from-scratch migration check

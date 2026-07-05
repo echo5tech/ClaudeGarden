@@ -5,6 +5,7 @@ import {
   DragEndEvent,
   DragOverlay,
   DragStartEvent,
+  KeyboardSensor,
   PointerSensor,
   TouchSensor,
   useSensor,
@@ -93,6 +94,8 @@ export function BedDesigner({
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     // 250 ms hold before drag activates on touch — lets normal scroll work
     useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
+    // Tab to a plant, space/enter to lift, arrows to move, space/enter to drop
+    useSensor(KeyboardSensor),
   );
 
   function handleDragStart(event: DragStartEvent) {
@@ -126,11 +129,23 @@ export function BedDesigner({
   }
 
   async function handleSave() {
+    // Spacing conflicts are advisory while dragging, but call them out when
+    // the layout is persisted.
+    const conflicted = placed.filter((p) =>
+      store.hasConflict(p.spacingInches, p.xInches, p.yInches, p.instanceId),
+    );
+
     await store.save();
     // Re-read store state after save to check for errors
     const { saveError: err } = useDesignerStore.getState();
     if (err) {
       toast.error(`Save failed: ${err}`);
+    } else if (conflicted.length > 0) {
+      toast.warning(
+        `Bed saved — ${conflicted.length} ${
+          conflicted.length === 1 ? 'plant is' : 'plants are'
+        } closer than the recommended spacing.`,
+      );
     } else {
       toast.success('Bed saved!');
     }

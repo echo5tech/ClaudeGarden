@@ -137,6 +137,11 @@ function MonthGrid({
 
 // ── Page ───────────────────────────────────────────────────────────────────────
 
+export const metadata = {
+  title: 'Calendar — WeGarden',
+  description: 'Sow, transplant, and harvest dates for your plants over the next three months.',
+};
+
 export default async function CalendarPage() {
   const supabase = await createClient();
 

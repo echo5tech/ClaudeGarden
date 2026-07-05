@@ -81,15 +81,20 @@ The social model is **one-way follows** (Twitter-style, not mutual friendships �
 
 - `gardens` — owner always; others if `visibility = 'public'` or they follow the owner.
 - `beds`, `bed_plants` — inherit visibility from owning garden.
-- `posts` — author + their followers + posts attached to public gardens.
+- `posts` — author + their followers + posts attached to public gardens; hidden between blocked pairs.
+- `comments`, `likes` — visible wherever the underlying post is visible; writes own-row only.
+- `notifications` — own-row read/update; rows are created by security-definer triggers on follows/likes/comments inserts.
+- `blocks` — own rows only; `is_blocked_pair()` is folded into posts visibility and follow inserts, and blocking severs existing follow edges both ways.
+- `reports` — insert-only for clients; reads are service-role (moderation tooling).
 - `tasks` — strictly own-row only.
 - `follows` — readable by either party; insert/delete only by the follower.
 - `plants` — public read; writes only via service-role key (i.e., the `permapeople-sync` Edge Function).
+- `profiles` — rows readable by all authed users, but `zip` is excluded via **column-level grants**; new profile columns must be added to the grant list (see `20260705110000_social_core.sql` and `timezone` in `20260705130000`).
 
 When adding tables, **always enable RLS in the same migration** and write policies before merging.
 
 ### Reminder pipeline
-`generate_daily_tasks()` (PL/pgSQL, declared in `*_pg_cron.sql`) runs at 06:00 UTC daily. It inserts water/harvest tasks idempotently via `ON CONFLICT` against the `(bed_plant_id, task_type, due_date)` unique constraint. At 06:15 UTC a second cron job calls `public.invoke_edge_function('send-push')` (pg_net HTTP POST), which sends one summary Expo push per device to every user with pending due tasks. `send-push` also accepts `{ "user_id": "…" }` for single-user testing (per-task notifications).
+`generate_daily_tasks()` (PL/pgSQL; latest definition in `20260705130000_reminder_engine.sql`) runs **hourly** and computes each user's local date from `profiles.timezone` (gating on ≥ 06:00 local). It inserts water tasks on a cadence derived from `plants.water_needs` (mirrors `waterIntervalDays()` in `@garden/shared/tasks` — keep the two in sync), plus one-shot harvest and sow tasks, skipping `bed_plants.removed_at` rows and stopping water 14 days past the expected harvest. All inserts are idempotent via `ON CONFLICT` against the `(bed_plant_id, task_type, due_date)` unique constraint. A second hourly cron job calls `public.invoke_edge_function('send-push')` (pg_net HTTP POST), which sends one summary Expo push per device to users in their local 06:00 hour with pending due tasks; a third (`send-push?mode=social`, every 10 min) pushes unsent follow/like/comment notifications and stamps `notifications.pushed_at`. `send-push` also accepts `{ "user_id": "…" }` for single-user testing (per-task notifications), and prunes `device_tokens` that Expo reports as `DeviceNotRegistered`.
 
 Mobile registers Expo push tokens into the `device_tokens` table via `apps/mobile/src/hooks/use-push-registration.ts` (requires a real EAS `projectId` in `app.json` → `extra.eas.projectId`).
 
@@ -136,4 +141,5 @@ The Permapeople transformer logic is duplicated inline from `packages/shared/src
 - Two `supabase migration new` calls in the same second collide on timestamp; reorder by renaming if migration ordering matters.
 - Importing from `@garden/shared` inside `supabase/functions/*` — Deno doesn't resolve workspace packages. Duplicate the logic inline, with a comment noting the source-of-truth.
 - Forgetting the per-environment Vault secrets (`project_url`, `secret_key`) — every scheduled Edge Function invocation silently fails until they exist (check `cron.job_run_details`).
-- The dormant `hardiness_zones` reference table is seeded with 2027-anchored frost dates and has no consumers — clients compute frost dates via `nextLastFrostDate()` in `@garden/shared/zone`. If you add a consumer, fix the table's dates in a new migration first.
+- Adding a `profiles` column without extending the column-level SELECT grant — the column will be invisible to clients (grants live in `20260705110000_social_core.sql`; `zip` is intentionally excluded as PII).
+- Hard-deleting `bed_plants` — the designer soft-deletes via `removed_at` so planting history, photos, and task lineage survive; readers must filter `.is('removed_at', null)`.

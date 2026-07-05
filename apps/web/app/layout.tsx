@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { NavLinks } from '@/components/nav-links';
+import { MobileNav } from '@/components/mobile-nav';
 import { NavAuth } from '@/components/nav-auth';
 import { NotificationsBell } from '@/components/notifications-bell';
 import { ThemeProvider } from '@/components/theme-provider';
@@ -26,11 +27,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body className="h-full flex flex-col bg-background text-foreground">
         <ThemeProvider>
-          <nav className="h-11 shrink-0 flex items-center px-4 gap-6 border-b bg-background">
+          <nav className="h-11 shrink-0 flex items-center px-4 gap-4 border-b bg-background">
+            <MobileNav />
             <Link href="/" className="font-semibold text-sm tracking-tight">
               WeGarden
             </Link>
-            <NavLinks />
+            <div className="hidden md:flex items-center gap-6">
+              <NavLinks />
+            </div>
             <div className="ml-auto flex items-center gap-3">
               <NotificationsBell />
               <ThemeToggle />
