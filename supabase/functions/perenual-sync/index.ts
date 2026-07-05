@@ -308,13 +308,20 @@ export default {
     let lastPage = 0;
     let totalPlants = 0;
     let hasMore = true;
+    let fetchFailed = false;
 
     while (hasMore && Date.now() - startedAt < MAX_RUN_MS) {
       const list = await fetchJson<PerenualListResponse>(
         `${PERENUAL}/species-list?key=${key}&edible=1&page=${currentPage}`,
       );
 
-      if (!list || !list.data || list.data.length === 0) {
+      if (!list || !list.data) {
+        // Transient upstream failure — keep the cursor here so the next run
+        // retries this page instead of treating the catalog as complete.
+        fetchFailed = true;
+        break;
+      }
+      if (list.data.length === 0) {
         hasMore = false;
         break;
       }
@@ -347,7 +354,7 @@ export default {
       currentPage++;
     }
 
-    const done = !hasMore;
+    const done = !hasMore && !fetchFailed;
 
     // Persist progress so the next body-{} invocation resumes (or restarts).
     await ctx.supabaseAdmin.from("sync_state").upsert(
@@ -359,14 +366,20 @@ export default {
       { onConflict: "source" },
     );
 
-    return Response.json({
-      status: done ? "ok" : "partial",
-      upserted: totalUpserted,
-      totalPlants,
-      lastPage,
-      pagesProcessed: `${startPage}–${currentPage - 1}`,
-      done,
-      ...(done ? {} : { resumeWith: { page: currentPage } }),
-    });
+    return Response.json(
+      {
+        status: fetchFailed ? "error" : done ? "ok" : "partial",
+        ...(fetchFailed
+          ? { message: `Perenual fetch failed at page ${currentPage}; will retry from there` }
+          : {}),
+        upserted: totalUpserted,
+        totalPlants,
+        lastPage,
+        pagesProcessed: `${startPage}–${currentPage - 1}`,
+        done,
+        ...(done ? {} : { resumeWith: { page: currentPage } }),
+      },
+      { status: fetchFailed ? 502 : 200 },
+    );
   }),
 };

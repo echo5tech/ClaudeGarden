@@ -11,6 +11,7 @@ import "@supabase/functions-js/edge-runtime.d.ts";
 import { withSupabase } from "@supabase/server";
 
 const PERMAPEOPLE_URL = "https://permapeople.org/api/plants";
+const MAX_RUN_MS = 100_000; // stop paging before the 150 s function timeout
 
 interface PermapeopleEntry {
   id: number;
@@ -54,6 +55,8 @@ interface PlantRow {
 /** Data kept in memory during the sync run for the companion-resolution pass. */
 interface CompanionNames {
   permapeople_id: number;
+  common_name: string;
+  scientific_name: string;
   good_neighbour_names: string[];
   bad_neighbour_names: string[];
 }
@@ -91,6 +94,8 @@ function toPlantRow(entry: PermapeopleEntry): {
     },
     companions: {
       permapeople_id: entry.id,
+      common_name: entry.name,
+      scientific_name: entry.scientific_name,
       good_neighbour_names: splitNames("Good Neighbours"),
       bad_neighbour_names: splitNames("Bad Neighbours"),
     },
@@ -106,10 +111,10 @@ type SupabaseAdmin = Parameters<Parameters<typeof withSupabase>[1]>[1]["supabase
  * companion_plant_ids / antagonist_plant_ids on each plant row.
  *
  * Strategy:
- * 1. Fetch { id, common_name } for every plant in one query.
+ * 1. Fetch { id, common_name, permapeople_id } for every plant in one query.
  * 2. Build a case-insensitive name → UUID map.
- * 3. For each entry that has neighbour names, resolve them and update.
- *    Unresolvable names are silently skipped (partial matches accepted).
+ * 3. Bulk-upsert the resolved companion arrays in chunks, keyed on
+ *    permapeople_id. Unresolvable names are silently skipped.
  */
 async function resolveCompanions(
   supabaseAdmin: SupabaseAdmin,
@@ -121,58 +126,50 @@ async function resolveCompanions(
   );
   if (relevant.length === 0) return { companionsUpdated: 0, errors: [] };
 
-  // Fetch the full name→id map from the database.
   const { data: allPlants, error: fetchError } = await supabaseAdmin
     .from("plants")
-    .select("id, common_name");
+    .select("id, common_name, permapeople_id");
   if (fetchError) {
     return { companionsUpdated: 0, errors: [fetchError.message] };
   }
 
-  const nameToId = new Map<string, string>(
-    (allPlants ?? []).map((p: { id: string; common_name: string }) => [
-      p.common_name.toLowerCase(),
-      p.id,
-    ]),
-  );
-
-  // Fetch permapeople_id → plant UUID mapping for the update target.
-  const { data: idMap, error: idMapError } = await supabaseAdmin
-    .from("plants")
-    .select("id, permapeople_id");
-  if (idMapError) {
-    return { companionsUpdated: 0, errors: [idMapError.message] };
+  const nameToId = new Map<string, string>();
+  const knownPermapeopleIds = new Set<number>();
+  for (const p of (allPlants ?? []) as Array<{
+    id: string;
+    common_name: string;
+    permapeople_id: number | null;
+  }>) {
+    nameToId.set(p.common_name.toLowerCase(), p.id);
+    if (p.permapeople_id != null) knownPermapeopleIds.add(p.permapeople_id);
   }
 
-  const permapeopleToUuid = new Map<number, string>(
-    (idMap ?? []).map((p: { id: string; permapeople_id: number }) => [p.permapeople_id, p.id]),
-  );
+  const resolveNames = (names: string[]): string[] =>
+    names.map((name) => nameToId.get(name.toLowerCase())).filter(Boolean) as string[];
+
+  const updates = relevant
+    .filter((c) => knownPermapeopleIds.has(c.permapeople_id))
+    .map((c) => ({
+      permapeople_id: c.permapeople_id,
+      common_name: c.common_name,
+      scientific_name: c.scientific_name,
+      companion_plant_ids: resolveNames(c.good_neighbour_names),
+      antagonist_plant_ids: resolveNames(c.bad_neighbour_names),
+    }));
 
   const errors: string[] = [];
   let companionsUpdated = 0;
+  const CHUNK = 500;
 
-  for (const c of relevant) {
-    const plantId = permapeopleToUuid.get(c.permapeople_id);
-    if (!plantId) continue; // plant wasn't upserted (shouldn't happen)
-
-    const resolveNames = (names: string[]): string[] =>
-      names.map((name) => nameToId.get(name.toLowerCase())).filter(Boolean) as string[];
-
-    const companionIds = resolveNames(c.good_neighbour_names);
-    const antagonistIds = resolveNames(c.bad_neighbour_names);
-
+  for (let i = 0; i < updates.length; i += CHUNK) {
+    const chunk = updates.slice(i, i + CHUNK);
     const { error } = await supabaseAdmin
       .from("plants")
-      .update({
-        companion_plant_ids: companionIds,
-        antagonist_plant_ids: antagonistIds,
-      })
-      .eq("id", plantId);
-
+      .upsert(chunk, { onConflict: "permapeople_id" });
     if (error) {
-      errors.push(`plant ${plantId}: ${error.message}`);
+      errors.push(`chunk ${i / CHUNK}: ${error.message}`);
     } else {
-      companionsUpdated += 1;
+      companionsUpdated += chunk.length;
     }
   }
 
@@ -189,10 +186,18 @@ export default {
 
     let upserted = 0;
     let page = 1;
+    let timedOut = false;
+    const startedAt = Date.now();
     const allCompanions: CompanionNames[] = [];
 
     // ── First pass: paginate through Permapeople and upsert plant rows ────────
     while (true) {
+      if (Date.now() - startedAt > MAX_RUN_MS) {
+        // Bail before the Edge runtime kills the invocation; upserts are
+        // idempotent, so the next nightly run re-covers the catalog.
+        timedOut = true;
+        break;
+      }
       const resp = await fetch(`${PERMAPEOPLE_URL}?page=${page}`, {
         headers: { "x-permapeople-key-id": keyId, "x-permapeople-key-secret": keySecret },
       });
@@ -223,7 +228,8 @@ export default {
     );
 
     return Response.json({
-      status: "ok",
+      status: timedOut ? "partial" : "ok",
+      ...(timedOut ? { message: `stopped after ${MAX_RUN_MS} ms at page ${page}` } : {}),
       upserted,
       companionsUpdated,
       companionErrors: errors.length > 0 ? errors : undefined,

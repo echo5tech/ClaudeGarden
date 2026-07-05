@@ -275,10 +275,17 @@ export default {
     let totalUpserted = 0;
     let totalPlants = 0;
     let hasMore = true;
+    let fetchFailed = false;
 
     while (hasMore && Date.now() - startedAt < MAX_RUN_MS) {
       const list = await fetchPage(token, currentPage);
-      if (!list || list.data.length === 0) {
+      if (!list) {
+        // Transient upstream failure — keep the cursor here so the next run
+        // retries this page instead of treating the catalog as complete.
+        fetchFailed = true;
+        break;
+      }
+      if (list.data.length === 0) {
         hasMore = false;
         break;
       }
@@ -307,7 +314,7 @@ export default {
       currentPage++;
     }
 
-    const done = !hasMore;
+    const done = !hasMore && !fetchFailed;
 
     // Persist progress so the next body-{} invocation resumes (or restarts).
     await ctx.supabaseAdmin.from("sync_state").upsert(
@@ -319,13 +326,19 @@ export default {
       { onConflict: "source" },
     );
 
-    return Response.json({
-      status: done ? "ok" : "partial",
-      upserted: totalUpserted,
-      totalPlants,
-      pagesProcessed: `${startPage}–${currentPage - 1}`,
-      done,
-      ...(done ? {} : { resumeWith: { page: currentPage } }),
-    });
+    return Response.json(
+      {
+        status: fetchFailed ? "error" : done ? "ok" : "partial",
+        ...(fetchFailed
+          ? { message: `Trefle fetch failed at page ${currentPage}; will retry from there` }
+          : {}),
+        upserted: totalUpserted,
+        totalPlants,
+        pagesProcessed: `${startPage}–${currentPage - 1}`,
+        done,
+        ...(done ? {} : { resumeWith: { page: currentPage } }),
+      },
+      { status: fetchFailed ? 502 : 200 },
+    );
   }),
 };
