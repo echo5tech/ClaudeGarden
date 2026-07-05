@@ -39,6 +39,9 @@ export function useNotificationObserver() {
       if (!data) return;
       if ('task_id' in data || 'due_date' in data) {
         router.push('/tasks');
+      } else if ('post_id' in data || 'notification' in data) {
+        // Social pushes (likes / comments / follows) land on the feed.
+        router.push('/');
       }
     }
 

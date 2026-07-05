@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -31,6 +32,34 @@ type BedRow = {
   height_inches: number;
   bed_plants: BedPlantRow[];
 };
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ gardenId: string }>;
+}): Promise<Metadata> {
+  const { gardenId } = await params;
+  const supabase = await createClient();
+  const { data: garden } = await supabase
+    .from("gardens")
+    .select("name, profiles(display_name)")
+    .eq("id", gardenId)
+    .eq("visibility", "public")
+    .maybeSingle();
+
+  const owner = (
+    garden as unknown as { profiles: { display_name: string } | null } | null
+  )?.profiles?.display_name;
+  const title = garden ? `${garden.name} — WeGarden` : "Garden — WeGarden";
+  const description = garden
+    ? `A public garden${owner ? ` by ${owner}` : ""} on WeGarden — beds, plants, and community posts.`
+    : "A public garden on WeGarden.";
+  return {
+    title,
+    description,
+    openGraph: { title, description, type: "website" },
+  };
+}
 
 export default async function GardenDetailPage({
   params,
