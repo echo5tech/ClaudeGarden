@@ -17,7 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { FeedPostCard } from '@/components/feed-post-card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { Palette, BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { fetchFeed, type FeedPost } from '@/lib/social';
 import { supabase } from '@/lib/supabase';
@@ -239,6 +239,6 @@ const styles = StyleSheet.create({
   },
   emptyIcon: { fontSize: 48 },
   emptyText: { textAlign: 'center' },
-  error: { color: '#c00', flexShrink: 1 },
+  error: { color: Palette.danger, flexShrink: 1 },
   pressed: { opacity: 0.6 },
 });

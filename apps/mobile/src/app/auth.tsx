@@ -13,7 +13,7 @@ import { useRouter } from 'expo-router';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
+import { Palette, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { supabase } from '@/lib/supabase';
 
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
     padding: Spacing.three,
     borderRadius: Spacing.two,
   },
-  errorText: { color: '#c00' },
+  errorText: { color: Palette.danger },
   form: {
     width: '100%',
     gap: Spacing.two,

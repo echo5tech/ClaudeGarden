@@ -26,6 +26,19 @@ export const Colors = {
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
+/**
+ * Brand + status colors shared across screens. Screens were hardcoding a
+ * different green per file (#2a7d4f / #16a34a / #166534) and repeating the
+ * error red — use these instead.
+ */
+export const Palette = {
+  green: '#2a7d4f',
+  greenDark: '#166534',
+  greenTint: 'rgba(34, 139, 34, 0.12)',
+  danger: '#c00000',
+  like: '#e11d48',
+} as const;
+
 export const Fonts = Platform.select({
   ios: {
     /** iOS `UIFontDescriptorSystemDesignDefault` */

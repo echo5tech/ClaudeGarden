@@ -9,12 +9,10 @@
     "@react-native-async-storage/async-storage": "^3.1.0",
     "@supabase/supabase-js": "^2.106.1",
     "expo": "~56.0.3",
-    "expo-camera": "~56.0.7",
     "expo-constants": "~56.0.14",
     "expo-device": "~56.0.4",
     "expo-file-system": "~56.0.7",
     "expo-font": "~56.0.5",
-    "expo-glass-effect": "~56.0.4",
     "expo-image": "~56.0.8",
     "expo-image-manipulator": "~56.0.13",
     "expo-image-picker": "~56.0.12",
@@ -24,9 +22,7 @@
     "expo-secure-store": "~56.0.4",
     "expo-splash-screen": "~56.0.9",
     "expo-status-bar": "~56.0.4",
-    "expo-symbols": "~56.0.5",
     "expo-system-ui": "~56.0.5",
-    "expo-web-browser": "~56.0.5",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.85.3",
@@ -37,8 +33,7 @@
     "react-native-url-polyfill": "^3.0.0",
     "react-native-web": "~0.21.0",
     "react-native-worklets": "0.8.3",
-    "zod": "^4.4.3",
-    "zustand": "^5.0.13"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@garden/config": "workspace:*",
@@ -48,7 +43,6 @@
   },
   "scripts": {
     "start": "expo start",
-    "reset-project": "node ./scripts/reset-project.js",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",

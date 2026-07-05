@@ -11,7 +11,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
+import { Palette, BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { supabase } from "@/lib/supabase";
 
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
   },
   spinner: { marginTop: Spacing.three },
   list: { flex: 1 },
-  error: { color: "#c00" },
+  error: { color: Palette.danger },
   emptyText: { textAlign: "center", marginTop: Spacing.four },
 
   newGardenButton: { alignSelf: "flex-start" },
@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
   confirmButton: {
-    backgroundColor: "#2a7d4f",
+    backgroundColor: Palette.green,
   },
   pressed: { opacity: 0.7 },
 

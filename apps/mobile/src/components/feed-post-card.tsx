@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
+import { Palette, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import {
   fetchComments,
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(34, 139, 34, 0.12)',
+    backgroundColor: Palette.greenTint,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
@@ -213,14 +213,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.two,
     paddingVertical: Spacing.one,
     borderRadius: 999,
-    backgroundColor: 'rgba(34, 139, 34, 0.12)',
+    backgroundColor: Palette.greenTint,
   },
   actionsRow: {
     flexDirection: 'row',
     gap: Spacing.four,
   },
   action: { paddingVertical: Spacing.one },
-  likedText: { color: '#e11d48' },
+  likedText: { color: Palette.like },
   commentsWrap: { gap: Spacing.two },
   comment: { gap: 2 },
   commentInputRow: {

@@ -1,11 +1,18 @@
-import { useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  RefreshControl,
+  StyleSheet,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
+import { Palette, BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
 import { supabase } from "@/lib/supabase";
 
 type Garden = {
@@ -20,19 +27,30 @@ export default function ExploreScreen() {
   const router = useRouter();
   const [gardens, setGardens] = useState<Garden[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    supabase
+  const load = useCallback(async () => {
+    const { data, error } = await supabase
       .from("gardens")
       .select("id, name, created_at, profiles(display_name), beds(count)")
       .eq("visibility", "public")
       .order("created_at", { ascending: false })
-      .limit(20)
-      .then(({ data, error }) => {
-        if (error) setError(error.message);
-        else setGardens((data as unknown as Garden[]) ?? []);
-      });
+      .limit(20);
+    if (error) setError(error.message);
+    else setGardens((data as unknown as Garden[]) ?? []);
   }, []);
+
+  useEffect(() => {
+    void (async () => {
+      await load();
+    })();
+  }, [load]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
+  }, [load]);
 
   return (
     <ThemedView style={styles.container}>
@@ -64,6 +82,7 @@ export default function ExploreScreen() {
             style={styles.list}
             data={gardens}
             keyExtractor={(g) => g.id}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
             renderItem={({ item }) => {
               const bedCount =
                 item.beds.length > 0 ? item.beds[0]?.count ?? 0 : 0;
@@ -132,7 +151,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: Spacing.two,
-    backgroundColor: "rgba(34, 139, 34, 0.12)",
+    backgroundColor: Palette.greenTint,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -161,6 +180,6 @@ const styles = StyleSheet.create({
   emptyText: {
     textAlign: "center",
   },
-  error: { color: "#c00" },
+  error: { color: Palette.danger },
   pressed: { opacity: 0.7 },
 });

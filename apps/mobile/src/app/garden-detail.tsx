@@ -11,7 +11,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { Spacing } from "@/constants/theme";
+import { Palette, Spacing } from "@/constants/theme";
 import { supabase } from "@/lib/supabase";
 
 type BedPlant = {
@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.three,
   },
   backRow: { paddingVertical: Spacing.two },
-  backLink: { color: "#2a7d4f" },
+  backLink: { color: Palette.green },
   header: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -287,16 +287,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.one,
     borderRadius: 20,
-    backgroundColor: "#2a7d4f",
+    backgroundColor: Palette.green,
     marginTop: Spacing.one,
   },
   followingButton: {
     backgroundColor: "transparent",
     borderWidth: 1,
-    borderColor: "#2a7d4f",
+    borderColor: Palette.green,
   },
   followText: { color: "#fff" },
-  followingText: { color: "#2a7d4f" },
+  followingText: { color: Palette.green },
   sectionTitle: { marginTop: Spacing.four, marginBottom: Spacing.two },
   bedCard: {
     borderRadius: Spacing.two,
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.one,
   },
   plantTag: {
-    backgroundColor: "rgba(34,139,34,0.12)",
+    backgroundColor: Palette.greenTint,
     borderRadius: 12,
     paddingHorizontal: Spacing.two,
     paddingVertical: 2,

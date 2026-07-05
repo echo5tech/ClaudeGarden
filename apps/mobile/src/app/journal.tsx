@@ -10,6 +10,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  RefreshControl,
   StyleSheet,
   TextInput,
   View,
@@ -18,7 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, Spacing } from '@/constants/theme';
+import { Palette, BottomTabInset, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { supabase } from '@/lib/supabase';
 
@@ -326,6 +327,7 @@ export default function JournalScreen() {
   const [photos, setPhotos] = useState<PhotoRow[]>([]);
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
 
   const fetchPhotos = useCallback(async () => {
@@ -364,6 +366,12 @@ export default function JournalScreen() {
     })();
   }, [fetchPhotos]);
 
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchPhotos();
+    setRefreshing(false);
+  }, [fetchPhotos]);
+
   return (
     <ThemedView style={styles.screen}>
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
@@ -391,6 +399,7 @@ export default function JournalScreen() {
           <FlatList
             data={photos}
             keyExtractor={(p) => p.id}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
             numColumns={2}
             columnWrapperStyle={styles.row}
             contentContainerStyle={[
@@ -547,6 +556,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.one,
   },
   errorText: {
-    color: '#c00',
+    color: Palette.danger,
   },
 });

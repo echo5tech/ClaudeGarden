@@ -8,7 +8,7 @@ import { ZONE_LAST_FROST_MMDD, nextLastFrostDate } from '@garden/shared';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { Palette, BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { supabase } from '@/lib/supabase';
 
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
     paddingBottom: Spacing.two,
   },
-  errorText: { color: '#c00' },
+  errorText: { color: Palette.danger },
   list: {
     flex: 1,
     width: '100%',

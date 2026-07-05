@@ -12,7 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, Spacing } from '@/constants/theme';
+import { Palette, BottomTabInset, Spacing } from '@/constants/theme';
 import { supabase } from '@/lib/supabase';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
   bubbleUser: {
     // Green tint via background type override isn't possible without custom component,
     // so we use a direct style override for the user bubble green background
-    backgroundColor: '#166534',
+    backgroundColor: Palette.greenDark,
   },
   bubbleAssistant: {},
   inputRow: {
@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
     maxHeight: 120,
   },
   sendButton: {
-    backgroundColor: '#16a34a',
+    backgroundColor: Palette.green,
     borderRadius: Spacing.three,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,

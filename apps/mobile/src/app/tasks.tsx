@@ -10,7 +10,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
+import { Palette, BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
 import { supabase } from "@/lib/supabase";
 
 type Task = {
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
   },
   spinner: { marginTop: Spacing.three },
   list: { flex: 1 },
-  error: { color: "#c00" },
+  error: { color: Palette.danger },
   emptyText: {
     textAlign: "center",
     marginTop: Spacing.four,

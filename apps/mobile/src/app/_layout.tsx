@@ -4,7 +4,6 @@ import { ActivityIndicator, StyleSheet, useColorScheme, View } from 'react-nativ
 import { DarkTheme, DefaultTheme, ThemeProvider, useRouter } from 'expo-router';
 import type { Session } from '@supabase/supabase-js';
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import AppTabs from '@/components/app-tabs';
 import { usePushRegistration } from '@/hooks/use-push-registration';
 import { useNotificationObserver } from '@/lib/notifications';
@@ -14,12 +13,7 @@ import { onboardingDismissedKey } from '@/app/onboarding';
 function AuthenticatedApp() {
   usePushRegistration();
   useNotificationObserver();
-  return (
-    <>
-      <AnimatedSplashOverlay />
-      <AppTabs />
-    </>
-  );
+  return <AppTabs />;
 }
 
 export default function RootLayout() {

@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { Palette, BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { timeAgo } from '@/lib/social';
 import { supabase } from '@/lib/supabase';
 
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: 'rgba(34, 139, 34, 0.12)',
+    backgroundColor: Palette.greenTint,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
@@ -276,8 +276,8 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#16a34a',
+    backgroundColor: Palette.green,
   },
-  error: { color: '#c00' },
+  error: { color: Palette.danger },
   pressed: { opacity: 0.6 },
 });
