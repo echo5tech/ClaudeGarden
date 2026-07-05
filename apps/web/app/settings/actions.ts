@@ -40,6 +40,52 @@ export async function updateDisplayName(
   return { success: true };
 }
 
+export async function updateProfileIdentity(
+  _prevState: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const username = formData.get("username");
+  const bio = ((formData.get("bio") as string | null) ?? "").trim();
+  const avatarUrl = (formData.get("avatarUrl") as string | null) || null;
+
+  if (typeof username !== "string" || !/^[a-z0-9_]{3,30}$/.test(username)) {
+    return {
+      error: "Username must be 3–30 characters: lowercase letters, numbers, underscores.",
+    };
+  }
+  if (bio.length > 500) {
+    return { error: "Bio must be 500 characters or fewer." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Not authenticated." };
+  }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      username,
+      bio: bio || null,
+      ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
+    })
+    .eq("user_id", user.id);
+
+  if (error) {
+    if (error.code === "23505") {
+      return { error: "That username is taken." };
+    }
+    return { error: error.message };
+  }
+
+  revalidatePath("/settings");
+  return { success: true };
+}
+
 export async function updateZone(
   _prevState: ActionResult,
   formData: FormData,

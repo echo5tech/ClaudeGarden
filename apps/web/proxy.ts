@@ -3,7 +3,18 @@ import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/lib/supabase/proxy";
 import type { Database } from "@garden/database";
 
-const PROTECTED_ROUTES = ["/gardens", "/designer", "/tasks", "/settings", "/botanist", "/calendar"];
+const PROTECTED_ROUTES = [
+  "/gardens",
+  "/designer",
+  "/tasks",
+  "/settings",
+  "/botanist",
+  "/calendar",
+  "/explore",
+  "/notifications",
+  "/posts",
+  "/u",
+];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;

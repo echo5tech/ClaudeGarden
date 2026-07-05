@@ -1,79 +1,130 @@
-import { createClient } from "@/lib/supabase/server";
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { createClient } from '@/lib/supabase/server';
+import { PostCard } from '@/components/post-card';
+import { PostComposer } from '@/components/post-composer';
+import { POST_SELECT, decoratePosts } from '@/lib/posts';
 
-const DEMO_PLANTS = [
-  { id: "1", common_name: "Tomato", scientific_name: "Solanum lycopersicum", days_to_harvest: 75, zones: ["5", "6", "7", "8", "9"] },
-  { id: "2", common_name: "Basil", scientific_name: "Ocimum basilicum", days_to_harvest: 30, zones: ["4", "5", "6", "7", "8", "9", "10"] },
-  { id: "3", common_name: "Zucchini", scientific_name: "Cucurbita pepo", days_to_harvest: 55, zones: ["3", "4", "5", "6", "7", "8", "9"] },
-  { id: "4", common_name: "Kale", scientific_name: "Brassica oleracea", days_to_harvest: 60, zones: ["2", "3", "4", "5", "6", "7", "8", "9"] },
-  { id: "5", common_name: "Carrot", scientific_name: "Daucus carota", days_to_harvest: 70, zones: ["3", "4", "5", "6", "7", "8", "9", "10"] },
-  { id: "6", common_name: "Sunflower", scientific_name: "Helianthus annuus", days_to_harvest: 80, zones: ["2", "3", "4", "5", "6", "7", "8", "9"] },
-];
+export const metadata: Metadata = {
+  title: 'WeGarden',
+  description:
+    'What should I plant now? Plan beds, get daily reminders, and share your garden.',
+};
 
-export default async function Home() {
-  let plants = null;
-  let isDemo = false;
+const FEED_PAGE_SIZE = 20;
 
-  try {
-    const supabase = await createClient();
-    const { data } = await supabase
-      .from("plants")
-      .select("id, common_name, scientific_name, days_to_harvest, zones")
-      .order("common_name");
-    plants = data;
-  } catch {
-    isDemo = true;
-    plants = DEMO_PLANTS;
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ before?: string }>;
+}) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return <Landing />;
   }
 
-  if (!plants || plants.length === 0) {
-    isDemo = true;
-    plants = DEMO_PLANTS;
-  }
+  const { before } = await searchParams;
 
+  // Home feed: everything the posts RLS lets this user see — their own posts,
+  // followed gardeners, and posts attached to public gardens (discovery).
+  let query = supabase
+    .from('posts')
+    .select(POST_SELECT)
+    .order('created_at', { ascending: false })
+    .limit(FEED_PAGE_SIZE + 1);
+  if (before) {
+    query = query.lt('created_at', before);
+  }
+  const { data: rows } = await query;
+
+  const page = (rows ?? []).slice(0, FEED_PAGE_SIZE);
+  const hasMore = (rows ?? []).length > FEED_PAGE_SIZE;
+  const posts = await decoratePosts(supabase, page, user.id);
+  const oldest = posts[posts.length - 1]?.created_at;
+
+  return (
+    <main className="min-h-screen px-4 sm:px-8 py-10 max-w-2xl mx-auto">
+      <h1 className="text-2xl font-bold tracking-tight mb-6">Home</h1>
+
+      <PostComposer placeholder="What's growing in your garden?" />
+
+      {posts.length === 0 ? (
+        <div className="border rounded-lg p-8 text-center text-sm text-zinc-500">
+          <p className="mb-2">Your feed is empty.</p>
+          <p>
+            <Link href="/explore" className="underline underline-offset-4 hover:no-underline">
+              Explore public gardens
+            </Link>{' '}
+            and follow gardeners to fill it up — or write your first post above.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {posts.map((post) => (
+            <PostCard key={post.id} post={post} path="/" />
+          ))}
+          {hasMore && oldest && (
+            <div className="pt-2 text-center">
+              <Link
+                href={`/?before=${encodeURIComponent(oldest)}`}
+                className="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+              >
+                Older posts →
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
+    </main>
+  );
+}
+
+function Landing() {
   return (
     <main className="min-h-screen px-8 py-16 max-w-3xl mx-auto">
       <h1 className="text-4xl font-bold tracking-tight">WeGarden</h1>
-      <p className="text-zinc-500 mt-2 mb-12">
+      <p className="text-zinc-500 mt-2 mb-8 max-w-xl">
         Answer &ldquo;What should I plant now?&rdquo; — drag-and-drop bed designer,
-        mobile reminders, and social sharing.
+        daily reminders on your phone, and a community of gardeners to learn from.
       </p>
-
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-semibold">Plant catalog</h2>
-        {isDemo && (
-          <span className="text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-1 rounded-full font-medium">
-            demo data
-          </span>
-        )}
+      <div className="flex gap-3 mb-16">
+        <Link
+          href="/auth"
+          className="rounded-lg bg-foreground text-background px-4 py-2 text-sm font-medium hover:opacity-90 transition-opacity"
+        >
+          Get started
+        </Link>
+        <Link
+          href="/plants"
+          className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"
+        >
+          Browse the plant catalog
+        </Link>
       </div>
-
-      <ul className="space-y-3">
-        {plants.map((p) => (
-          <li key={p.id}>
-            <a
-              href={isDemo ? undefined : `/plants/${p.id}`}
-              className="block border rounded-lg p-4 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"
-            >
-              <div className="font-medium">{p.common_name}</div>
-              <div className="text-sm italic text-zinc-500">
-                {p.scientific_name}
-              </div>
-              <div className="text-xs text-zinc-400 mt-1">
-                {p.days_to_harvest != null
-                  ? `${p.days_to_harvest} days to harvest`
-                  : "harvest time unknown"}{" "}
-                · zones {p.zones.join(", ")}
-              </div>
-            </a>
-          </li>
-        ))}
+      <ul className="grid gap-6 sm:grid-cols-3 text-sm">
+        <li>
+          <h2 className="font-semibold mb-1">🌱 Plan</h2>
+          <p className="text-zinc-500">
+            Drag plants onto a to-scale bed with spacing conflicts flagged as you go.
+          </p>
+        </li>
+        <li>
+          <h2 className="font-semibold mb-1">⏰ Grow</h2>
+          <p className="text-zinc-500">
+            Water, sow, and harvest reminders tuned to your USDA zone and frost dates.
+          </p>
+        </li>
+        <li>
+          <h2 className="font-semibold mb-1">🧑‍🌾 Share</h2>
+          <p className="text-zinc-500">
+            Follow gardeners, swap tips, and post progress photos from your phone.
+          </p>
+        </li>
       </ul>
-
-      <p className="text-xs text-zinc-400 mt-12">
-        {isDemo
-          ? "Showing demo data — connect a Supabase project to load real plants."
-          : `${plants.length} plants loaded from database.`}
-      </p>
     </main>
   );
 }

@@ -4,10 +4,10 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 const links = [
-  { href: '/',          label: 'Catalog'    },
-  { href: '/gardens',   label: 'My Gardens' },
+  { href: '/',          label: 'Home'       },
   { href: '/explore',   label: 'Explore'    },
-  { href: '/designer',  label: 'Designer'   },
+  { href: '/plants',    label: 'Plants'     },
+  { href: '/gardens',   label: 'My Gardens' },
   { href: '/tasks',     label: 'Tasks'      },
   { href: '/calendar',  label: 'Calendar'   },
   { href: '/botanist',  label: 'Botanist'   },

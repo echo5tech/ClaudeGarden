@@ -28,7 +28,7 @@ export default async function SettingsPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("display_name, hardiness_zone, last_frost_date")
+    .select("display_name, hardiness_zone, last_frost_date, username, avatar_url, bio")
     .eq("user_id", user.id)
     .single();
 
@@ -38,6 +38,9 @@ export default async function SettingsPage() {
     display_name: profile?.display_name ?? user.email?.split("@")[0] ?? "",
     hardiness_zone: profile?.hardiness_zone ?? null,
     last_frost_date: profile?.last_frost_date ?? null,
+    username: profile?.username ?? null,
+    avatar_url: profile?.avatar_url ?? null,
+    bio: profile?.bio ?? null,
   };
 
   return (

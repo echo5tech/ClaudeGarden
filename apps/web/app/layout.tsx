@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { NavLinks } from '@/components/nav-links';
 import { NavAuth } from '@/components/nav-auth';
+import { NotificationsBell } from '@/components/notifications-bell';
 import { ThemeProvider } from '@/components/theme-provider';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Toaster } from '@/components/ui/sonner';
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </Link>
             <NavLinks />
             <div className="ml-auto flex items-center gap-3">
+              <NotificationsBell />
               <ThemeToggle />
               <NavAuth />
             </div>
