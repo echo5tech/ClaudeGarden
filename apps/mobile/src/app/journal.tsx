@@ -1,4 +1,6 @@
+import { File } from 'expo-file-system';
 import { Image } from 'expo-image';
+import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useEffect, useState } from 'react';
 import {
@@ -86,6 +88,7 @@ function UploadModal({
   const theme = useTheme();
   const [step, setStep] = useState<'pick-source' | 'caption' | 'pick-plant' | 'uploading'>('pick-source');
   const [imageUri, setImageUri] = useState<string | null>(null);
+  const [imageWidth, setImageWidth] = useState<number | null>(null);
   const [caption, setCaption] = useState('');
   const [bedPlants, setBedPlants] = useState<BedPlantOption[]>([]);
   const [selectedBedPlantId, setSelectedBedPlantId] = useState<string | null>(null);
@@ -94,6 +97,7 @@ function UploadModal({
   const resetState = useCallback(() => {
     setStep('pick-source');
     setImageUri(null);
+    setImageWidth(null);
     setCaption('');
     setSelectedBedPlantId(null);
     setError(null);
@@ -130,6 +134,7 @@ function UploadModal({
 
     if (result.canceled || !result.assets?.[0]) return;
     setImageUri(result.assets[0].uri);
+    setImageWidth(result.assets[0].width ?? null);
     setStep('caption');
   }, []);
 
@@ -158,18 +163,27 @@ function UploadModal({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not logged in');
 
-      // Fetch the image as a blob
-      const response = await fetch(imageUri);
-      const blob = await response.blob();
+      // Downscale + recompress before upload (camera originals are huge),
+      // then read the result as bytes. fetch(uri).blob() is unreliable for
+      // local files in React Native, so go through expo-file-system instead.
+      const MAX_WIDTH = 1600;
+      const context = ImageManipulator.manipulate(imageUri);
+      if (imageWidth && imageWidth > MAX_WIDTH) {
+        context.resize({ width: MAX_WIDTH });
+      }
+      const rendered = await context.renderAsync();
+      const compressed = await rendered.saveAsync({
+        compress: 0.8,
+        format: SaveFormat.JPEG,
+      });
 
-      const ext = imageUri.split('.').pop()?.toLowerCase() ?? 'jpg';
-      const filename = `${Date.now()}.${ext}`;
-      const storagePath = `${user.id}/${filename}`;
+      const arrayBuffer = await new File(compressed.uri).arrayBuffer();
+      const storagePath = `${user.id}/${Date.now()}.jpg`;
 
       const { error: uploadErr } = await supabase.storage
         .from('plant-photos')
-        .upload(storagePath, blob, {
-          contentType: blob.type || 'image/jpeg',
+        .upload(storagePath, arrayBuffer, {
+          contentType: 'image/jpeg',
           upsert: false,
         });
 
@@ -191,7 +205,7 @@ function UploadModal({
       setError(msg);
       setStep('pick-plant');
     }
-  }, [imageUri, selectedBedPlantId, caption, handleClose, onUploaded]);
+  }, [imageUri, imageWidth, selectedBedPlantId, caption, handleClose, onUploaded]);
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
@@ -325,18 +339,19 @@ export default function JournalScreen() {
     const rows = (data ?? []) as PhotoRow[];
     setPhotos(rows);
 
-    // Fetch signed URLs in parallel
-    const urlEntries = await Promise.all(
-      rows.map(async (row) => {
-        const { data: sd } = await supabase.storage
-          .from('plant-photos')
-          .createSignedUrl(row.storage_path, 3600);
-        return [row.id, sd?.signedUrl ?? null] as [string, string | null];
-      })
-    );
+    // One batched request instead of a signed-URL call per photo
     const urlMap: Record<string, string> = {};
-    for (const [id, url] of urlEntries) {
-      if (url) urlMap[id] = url;
+    if (rows.length > 0) {
+      const { data: signed } = await supabase.storage
+        .from('plant-photos')
+        .createSignedUrls(rows.map((r) => r.storage_path), 3600);
+      const byPath = new Map(
+        (signed ?? []).map((s) => [s.path, s.signedUrl] as [string | null, string | null]),
+      );
+      for (const row of rows) {
+        const url = byPath.get(row.storage_path);
+        if (url) urlMap[row.id] = url;
+      }
     }
     setSignedUrls(urlMap);
     setLoading(false);

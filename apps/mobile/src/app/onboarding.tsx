@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -27,6 +28,16 @@ const ZONES = [
 ] as const;
 
 type Zone = (typeof ZONES)[number];
+
+/**
+ * Once set for a user, the root layout stops redirecting them here — whether
+ * they picked a zone or skipped. Without this, "Skip" bounced straight back
+ * (the layout redirects any session without a zone), and even "Continue"
+ * could bounce later because the layout's zone check goes stale.
+ */
+export function onboardingDismissedKey(userId: string): string {
+  return `onboarding-dismissed:${userId}`;
+}
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -71,10 +82,17 @@ export default function OnboardingScreen() {
       setError(updateError.message);
       return;
     }
+    await AsyncStorage.setItem(onboardingDismissedKey(user.id), '1');
     router.replace('/');
   }
 
-  function handleSkip() {
+  async function handleSkip() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user) {
+      await AsyncStorage.setItem(onboardingDismissedKey(user.id), '1');
+    }
     router.replace('/');
   }
 

@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, useColorScheme, View } from 'react-native';
 import { DarkTheme, DefaultTheme, ThemeProvider, useRouter } from 'expo-router';
@@ -6,10 +7,13 @@ import type { Session } from '@supabase/supabase-js';
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import AppTabs from '@/components/app-tabs';
 import { usePushRegistration } from '@/hooks/use-push-registration';
+import { useNotificationObserver } from '@/lib/notifications';
 import { supabase } from '@/lib/supabase';
+import { onboardingDismissedKey } from '@/app/onboarding';
 
 function AuthenticatedApp() {
   usePushRegistration();
+  useNotificationObserver();
   return (
     <>
       <AnimatedSplashOverlay />
@@ -26,13 +30,18 @@ export default function RootLayout() {
   const [hasZone, setHasZone] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
 
+  // "Needs onboarding" = no zone AND the user has never completed or skipped
+  // the onboarding screen on this device.
   async function checkZone(userId: string): Promise<boolean> {
-    const { data } = await supabase
-      .from('profiles')
-      .select('hardiness_zone')
-      .eq('user_id', userId)
-      .maybeSingle();
-    return data?.hardiness_zone != null;
+    const [{ data }, dismissed] = await Promise.all([
+      supabase
+        .from('profiles')
+        .select('hardiness_zone')
+        .eq('user_id', userId)
+        .maybeSingle(),
+      AsyncStorage.getItem(onboardingDismissedKey(userId)),
+    ]);
+    return data?.hardiness_zone != null || dismissed != null;
   }
 
   useEffect(() => {

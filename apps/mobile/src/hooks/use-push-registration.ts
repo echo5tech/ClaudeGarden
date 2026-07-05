@@ -44,9 +44,16 @@ export function usePushRegistration() {
       const { status } = await Notifications.requestPermissionsAsync();
       if (status !== "granted") return;
 
-      // Retrieve the Expo push token.
+      // Retrieve the Expo push token. Skip cleanly until `eas init` has
+      // replaced the placeholder projectId in app.json.
       const projectId =
         Constants.expoConfig?.extra?.eas?.projectId ?? undefined;
+      if (!projectId || projectId.startsWith("REPLACE_WITH")) {
+        console.warn(
+          "[usePushRegistration] no EAS projectId configured; run `eas init` to enable push",
+        );
+        return;
+      }
       const pushToken = await Notifications.getExpoPushTokenAsync({
         projectId,
       });
@@ -71,6 +78,10 @@ export function usePushRegistration() {
       }
     }
 
-    register();
+    // A rejected token fetch (misconfigured project, network) must not become
+    // an unhandled promise rejection — push is best-effort.
+    register().catch((err) => {
+      console.warn("[usePushRegistration] registration failed:", err);
+    });
   }, []);
 }
