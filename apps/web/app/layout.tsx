@@ -3,6 +3,9 @@ import Link from 'next/link';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { NavLinks } from '@/components/nav-links';
 import { NavAuth } from '@/components/nav-auth';
+import { ThemeProvider } from '@/components/theme-provider';
+import { ThemeToggle } from '@/components/theme-toggle';
+import { Toaster } from '@/components/ui/sonner';
 import './globals.css';
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
@@ -18,16 +21,23 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="h-full flex flex-col bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50">
-        <nav className="h-11 shrink-0 flex items-center px-4 gap-6 border-b bg-white dark:bg-zinc-950">
-          <Link href="/" className="font-semibold text-sm tracking-tight">
-            WeGarden
-          </Link>
-          <NavLinks />
-          <NavAuth />
-        </nav>
-        {children}
+      <body className="h-full flex flex-col bg-background text-foreground">
+        <ThemeProvider>
+          <nav className="h-11 shrink-0 flex items-center px-4 gap-6 border-b bg-background">
+            <Link href="/" className="font-semibold text-sm tracking-tight">
+              WeGarden
+            </Link>
+            <NavLinks />
+            <div className="ml-auto flex items-center gap-3">
+              <ThemeToggle />
+              <NavAuth />
+            </div>
+          </nav>
+          {children}
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );

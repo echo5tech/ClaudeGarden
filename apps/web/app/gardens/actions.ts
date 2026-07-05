@@ -8,7 +8,7 @@ export async function createGarden(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect('/login')
+    redirect('/auth')
   }
 
   const name = (formData.get('name') as string | null)?.trim()
@@ -36,7 +36,7 @@ export async function deleteGarden(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect('/login')
+    redirect('/auth')
   }
 
   const id = formData.get('id') as string

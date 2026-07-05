@@ -43,9 +43,9 @@ export default async function DesignerPage(props: DesignerPageProps) {
   }
 
   if (!gardenId) {
-    // If no garden is specified we can't save anything — redirect to home
-    // so the user can pick or create a garden first.
-    redirect('/');
+    // If no garden is specified we can't save anything — send the user to
+    // My Gardens to pick or create one (the nav "Designer" link lands here).
+    redirect('/gardens');
   }
 
   // Fetch the public plant catalog
@@ -100,6 +100,7 @@ export default async function DesignerPage(props: DesignerPageProps) {
           xInches: Number(bp.x_inches),
           yInches: Number(bp.y_inches),
           color,
+          plantedDate: bp.planted_date,
         } satisfies PlacedPlant;
       });
     }

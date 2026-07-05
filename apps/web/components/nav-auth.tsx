@@ -27,7 +27,7 @@ export function NavAuth() {
     return (
       <Link
         href="/auth"
-        className="ml-auto text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+        className="text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
       >
         Sign in
       </Link>
@@ -45,7 +45,7 @@ export function NavAuth() {
     <button
       type="button"
       onClick={handleSignOut}
-      className="ml-auto text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+      className="text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
     >
       Sign out
     </button>

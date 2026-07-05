@@ -14,15 +14,26 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 
-export default function AuthPage() {
+interface AuthFormProps {
+  redirectTo?: string;
+  initialError?: string;
+}
+
+export function AuthForm({ redirectTo, initialError }: AuthFormProps) {
   const router = useRouter();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(initialError ?? null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Only allow same-origin paths; anything else falls back to home.
+  const safeRedirect =
+    redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//")
+      ? redirectTo
+      : "/";
 
   async function handleSubmit(e: React.FormEvent) {
     const supabase = createClient();
@@ -40,7 +51,7 @@ export default function AuthPage() {
         if (error) {
           setError(error.message);
         } else {
-          router.push("/");
+          router.push(safeRedirect);
         }
       } else {
         const { error } = await supabase.auth.signUp({

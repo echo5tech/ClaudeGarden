@@ -19,6 +19,7 @@ export interface PlacedPlant {
   xInches: number; // center x
   yInches: number; // center y
   color: string;
+  plantedDate?: string; // ISO date; set once persisted, never rewritten on save
 }
 
 interface DesignerState {
@@ -165,7 +166,6 @@ export const useDesignerStore = create<DesignerState>()((set, get) => ({
         if (error) throw error;
         currentBedId = data.id;
       } else {
-        // Existing bed: update dimensions + delete old bed_plants
         const { error: updateError } = await supabase
           .from('beds')
           .update({
@@ -174,29 +174,47 @@ export const useDesignerStore = create<DesignerState>()((set, get) => ({
           })
           .eq('id', currentBedId);
         if (updateError) throw updateError;
-
-        const { error: deleteError } = await supabase
-          .from('bed_plants')
-          .delete()
-          .eq('bed_id', currentBedId);
-        if (deleteError) throw deleteError;
       }
 
-      // Bulk-insert fresh bed_plants
+      // Upsert placements by id so existing rows keep their id and
+      // planted_date (task rows reference bed_plant ids; the calendar and
+      // harvest math depend on the original planting date). instanceId doubles
+      // as the row id: loaded rows carry their DB id, new ones a client UUID.
       if (placed.length > 0) {
-        const { error: insertError } = await supabase.from('bed_plants').insert(
+        const { error: upsertError } = await supabase.from('bed_plants').upsert(
           placed.map((p) => ({
+            id: p.instanceId,
             bed_id: currentBedId!,
             plant_id: p.plantId,
             x_inches: p.xInches,
             y_inches: p.yInches,
-            planted_date: today,
+            planted_date: p.plantedDate ?? today,
           })),
+          { onConflict: 'id' },
         );
-        if (insertError) throw insertError;
+        if (upsertError) throw upsertError;
       }
 
-      set({ bedId: currentBedId, isDirty: false, saving: false });
+      // Delete only rows the user actually removed from the canvas.
+      let deleteQuery = supabase.from('bed_plants').delete().eq('bed_id', currentBedId);
+      if (placed.length > 0) {
+        deleteQuery = deleteQuery.not(
+          'id',
+          'in',
+          `(${placed.map((p) => p.instanceId).join(',')})`,
+        );
+      }
+      const { error: deleteError } = await deleteQuery;
+      if (deleteError) throw deleteError;
+
+      set((s) => ({
+        bedId: currentBedId,
+        isDirty: false,
+        saving: false,
+        // Freeze planted_date for newly persisted plants so a later save
+        // doesn't shift it to that day's date.
+        placed: s.placed.map((p) => (p.plantedDate ? p : { ...p, plantedDate: today })),
+      }));
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       set({ saveError: message, saving: false });
