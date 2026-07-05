@@ -71,6 +71,7 @@ export default function GardenDetailScreen() {
         )
         .eq("id", gardenId!)
         .eq("visibility", "public")
+        .is("beds.bed_plants.removed_at", null)
         .single();
 
       if (gardenError || !gardenData) {

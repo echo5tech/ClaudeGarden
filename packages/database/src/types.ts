@@ -41,6 +41,7 @@ export type Database = {
           id: string
           plant_id: string
           planted_date: string
+          removed_at: string | null
           x_inches: number
           y_inches: number
         }
@@ -50,6 +51,7 @@ export type Database = {
           id?: string
           plant_id: string
           planted_date: string
+          removed_at?: string | null
           x_inches: number
           y_inches: number
         }
@@ -59,6 +61,7 @@ export type Database = {
           id?: string
           plant_id?: string
           planted_date?: string
+          removed_at?: string | null
           x_inches?: number
           y_inches?: number
         }
@@ -599,6 +602,7 @@ export type Database = {
           display_name: string
           hardiness_zone: string | null
           last_frost_date: string | null
+          timezone: string
           updated_at: string
           user_id: string
           username: string | null
@@ -611,6 +615,7 @@ export type Database = {
           display_name: string
           hardiness_zone?: string | null
           last_frost_date?: string | null
+          timezone?: string
           updated_at?: string
           user_id: string
           username?: string | null
@@ -623,6 +628,7 @@ export type Database = {
           display_name?: string
           hardiness_zone?: string | null
           last_frost_date?: string | null
+          timezone?: string
           updated_at?: string
           user_id?: string
           username?: string | null

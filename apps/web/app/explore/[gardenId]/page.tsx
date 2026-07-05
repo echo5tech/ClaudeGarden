@@ -89,7 +89,8 @@ export default async function GardenDetailPage({
         .select(
           "id, width_inches, height_inches, bed_plants(id, planted_date, plants(id, common_name, scientific_name, days_to_harvest))",
         )
-        .eq("garden_id", gardenId),
+        .eq("garden_id", gardenId)
+        .is("bed_plants.removed_at", null),
       supabase
         .from("posts")
         .select(POST_SELECT)

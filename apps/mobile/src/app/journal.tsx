@@ -142,6 +142,7 @@ function UploadModal({
     const { data } = await supabase
       .from('bed_plants')
       .select('id, plants(common_name), beds(gardens(name))')
+      .is('removed_at', null)
       .limit(100);
 
     const opts: BedPlantOption[] = (data ?? []).map((bp) => {

@@ -81,7 +81,8 @@ export default async function DesignerPage(props: DesignerPageProps) {
       const { data: bedPlantsData } = await supabase
         .from('bed_plants')
         .select('id, x_inches, y_inches, planted_date, plants(id, common_name, spacing_inches)')
-        .eq('bed_id', bedId);
+        .eq('bed_id', bedId)
+        .is('removed_at', null);
 
       initialPlaced = (bedPlantsData ?? []).map((bp) => {
         // plants is a single object (FK join), not an array

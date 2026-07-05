@@ -225,6 +225,11 @@ export function SettingsForm({ profile }: { profile: Profile }) {
         </CardHeader>
         <CardContent>
           <form action={zoneAction} className="flex flex-col gap-4">
+            <input
+              type="hidden"
+              name="timezone"
+              value={Intl.DateTimeFormat().resolvedOptions().timeZone}
+            />
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="hardiness_zone">Zone</Label>
               <select

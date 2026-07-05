@@ -74,6 +74,8 @@ export default function OnboardingScreen() {
       .update({
         hardiness_zone: selected,
         last_frost_date: nextLastFrostDate(selected, new Date()),
+        // Device timezone so reminders arrive on the user's local clock.
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone ?? 'UTC',
       })
       .eq('user_id', user.id);
 

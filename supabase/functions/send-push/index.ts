@@ -73,6 +73,31 @@ async function pruneStaleTokens(admin: SupabaseAdmin, staleTokens: string[]) {
   await admin.from("device_tokens").delete().in("token", staleTokens);
 }
 
+/** Local date (YYYY-MM-DD) and hour for an IANA timezone; UTC on bad input. */
+function localClock(timezone: string): { date: string; hour: number } {
+  try {
+    const date = new Intl.DateTimeFormat("en-CA", {
+      timeZone: timezone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date());
+    const hour = Number(
+      new Intl.DateTimeFormat("en-US", {
+        timeZone: timezone,
+        hour: "numeric",
+        hour12: false,
+      }).format(new Date()),
+    );
+    return { date, hour };
+  } catch {
+    return {
+      date: new Date().toISOString().slice(0, 10),
+      hour: new Date().getUTCHours(),
+    };
+  }
+}
+
 const SOCIAL_TITLE: Record<string, string> = {
   follow: "New follower",
   like: "Your post was liked",
@@ -189,15 +214,38 @@ export default {
     }
 
     // ── Fan-out mode: one summary notification per device ───────────────────
+    // Runs hourly; each user is notified during their local 06:00 hour.
+    // Fetch a day ahead of UTC so ahead-of-UTC timezones see their "today".
+    const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 10);
     const { data: tasks, error: tasksError } = await ctx.supabaseAdmin
       .from("tasks")
-      .select("user_id, task_type")
+      .select("user_id, due_date")
       .eq("status", "pending")
-      .lte("due_date", today);
+      .lte("due_date", tomorrow);
     if (tasksError) return new Response(tasksError.message, { status: 500 });
 
+    const userIds = [...new Set((tasks ?? []).map((t) => t.user_id))];
+    if (userIds.length === 0) {
+      return Response.json({ users: 0, sent: 0 });
+    }
+
+    const { data: profileRows } = await ctx.supabaseAdmin
+      .from("profiles")
+      .select("user_id, timezone")
+      .in("user_id", userIds);
+    const timezoneByUser = new Map(
+      (profileRows ?? []).map((p) => [p.user_id, p.timezone ?? "UTC"]),
+    );
+
+    // Count tasks due by each user's local "today", and only for users whose
+    // local clock is in the 06:00 hour right now.
     const taskCountByUser = new Map<string, number>();
     for (const t of tasks ?? []) {
+      const clock = localClock(timezoneByUser.get(t.user_id) ?? "UTC");
+      if (clock.hour !== 6) continue;
+      if (t.due_date > clock.date) continue;
       taskCountByUser.set(t.user_id, (taskCountByUser.get(t.user_id) ?? 0) + 1);
     }
 

@@ -111,11 +111,20 @@ export async function updateZone(
   // Next future occurrence of the zone's last-frost date (null = frost-free).
   const lastFrostDate = nextLastFrostDate(zone, new Date());
 
+  // Browser-detected IANA timezone rides along so task generation and push
+  // delivery can use the user's local clock.
+  const timezone = formData.get("timezone");
+  const validTimezone =
+    typeof timezone === "string" && /^[A-Za-z_+-]+(\/[A-Za-z_+-]+){0,2}$/.test(timezone)
+      ? timezone
+      : null;
+
   const { error } = await supabase
     .from("profiles")
     .update({
       hardiness_zone: zone,
       last_frost_date: lastFrostDate,
+      ...(validTimezone ? { timezone: validTimezone } : {}),
     })
     .eq("user_id", user.id);
 

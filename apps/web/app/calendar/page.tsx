@@ -156,12 +156,15 @@ export default async function CalendarPage() {
     .single();
 
   // Bed plants with plant + garden context (RLS handles filtering to own gardens)
-  const { data: bedPlants } = await supabase.from('bed_plants').select(`
+  const { data: bedPlants } = await supabase
+    .from('bed_plants')
+    .select(`
     id,
     planted_date,
     plants(common_name, days_to_harvest, sow_weeks_before_frost, direct_sow_weeks_after_frost),
     beds(gardens(name))
-  `);
+  `)
+    .is('removed_at', null);
 
   // ── Compute events ────────────────────────────────────────────────────────
 

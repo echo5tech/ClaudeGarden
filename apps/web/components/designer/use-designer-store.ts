@@ -195,17 +195,34 @@ export const useDesignerStore = create<DesignerState>()((set, get) => ({
         if (upsertError) throw upsertError;
       }
 
-      // Delete only rows the user actually removed from the canvas.
-      let deleteQuery = supabase.from('bed_plants').delete().eq('bed_id', currentBedId);
+      // Soft-delete rows the user removed from the canvas (removed_at ends
+      // task generation but preserves history), and skip their pending tasks.
+      let removeQuery = supabase
+        .from('bed_plants')
+        .update({ removed_at: new Date().toISOString() })
+        .eq('bed_id', currentBedId)
+        .is('removed_at', null);
       if (placed.length > 0) {
-        deleteQuery = deleteQuery.not(
+        removeQuery = removeQuery.not(
           'id',
           'in',
           `(${placed.map((p) => p.instanceId).join(',')})`,
         );
       }
-      const { error: deleteError } = await deleteQuery;
-      if (deleteError) throw deleteError;
+      const { data: removedRows, error: removeError } = await removeQuery.select('id');
+      if (removeError) throw removeError;
+
+      if (removedRows && removedRows.length > 0) {
+        const { error: taskError } = await supabase
+          .from('tasks')
+          .update({ status: 'skipped' })
+          .eq('status', 'pending')
+          .in(
+            'bed_plant_id',
+            removedRows.map((r) => r.id),
+          );
+        if (taskError) throw taskError;
+      }
 
       set((s) => ({
         bedId: currentBedId,
