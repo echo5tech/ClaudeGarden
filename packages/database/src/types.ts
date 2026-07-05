@@ -111,6 +111,39 @@ export type Database = {
           },
         ]
       }
+      blocks: {
+        Row: {
+          blocked_id: string
+          blocker_id: string
+          created_at: string
+        }
+        Insert: {
+          blocked_id: string
+          blocker_id: string
+          created_at?: string
+        }
+        Update: {
+          blocked_id?: string
+          blocker_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blocks_blocked_id_fkey"
+            columns: ["blocked_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "blocks_blocker_id_fkey"
+            columns: ["blocker_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       chat_messages: {
         Row: {
           content: string
@@ -162,6 +195,45 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "chat_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      comments: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -280,6 +352,91 @@ export type Database = {
           zone?: string
         }
         Relationships: []
+      }
+      likes: {
+        Row: {
+          created_at: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          actor_id: string
+          created_at: string
+          id: string
+          post_id: string | null
+          read_at: string | null
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id: string
+        }
+        Insert: {
+          actor_id: string
+          created_at?: string
+          id?: string
+          post_id?: string | null
+          read_at?: string | null
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id: string
+        }
+        Update: {
+          actor_id?: string
+          created_at?: string
+          id?: string
+          post_id?: string | null
+          read_at?: string | null
+          type?: Database["public"]["Enums"]["notification_type"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "notifications_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       plant_photos: {
         Row: {
@@ -433,33 +590,91 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
+          bio: string | null
           created_at: string
           display_name: string
           hardiness_zone: string | null
           last_frost_date: string | null
           updated_at: string
           user_id: string
+          username: string | null
           zip: string | null
         }
         Insert: {
+          avatar_url?: string | null
+          bio?: string | null
           created_at?: string
           display_name: string
           hardiness_zone?: string | null
           last_frost_date?: string | null
           updated_at?: string
           user_id: string
+          username?: string | null
           zip?: string | null
         }
         Update: {
+          avatar_url?: string | null
+          bio?: string | null
           created_at?: string
           display_name?: string
           hardiness_zone?: string | null
           last_frost_date?: string | null
           updated_at?: string
           user_id?: string
+          username?: string | null
           zip?: string | null
         }
         Relationships: []
+      }
+      reports: {
+        Row: {
+          comment_id: string | null
+          created_at: string
+          id: string
+          post_id: string | null
+          reason: string
+          reporter_id: string
+        }
+        Insert: {
+          comment_id?: string | null
+          created_at?: string
+          id?: string
+          post_id?: string | null
+          reason: string
+          reporter_id: string
+        }
+        Update: {
+          comment_id?: string | null
+          created_at?: string
+          id?: string
+          post_id?: string | null
+          reason?: string
+          reporter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       sync_state: {
         Row: {
@@ -531,8 +746,10 @@ export type Database = {
     Functions: {
       generate_daily_tasks: { Args: never; Returns: undefined }
       invoke_edge_function: { Args: { function_name: string }; Returns: number }
+      is_blocked_pair: { Args: { a: string; b: string }; Returns: boolean }
     }
     Enums: {
+      notification_type: "follow" | "like" | "comment"
       task_status: "pending" | "done" | "skipped"
       task_type: "sow" | "water" | "harvest"
       visibility: "public" | "private"
@@ -666,6 +883,7 @@ export const Constants = {
   },
   public: {
     Enums: {
+      notification_type: ["follow", "like", "comment"],
       task_status: ["pending", "done", "skipped"],
       task_type: ["sow", "water", "harvest"],
       visibility: ["public", "private"],

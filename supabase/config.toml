@@ -123,6 +123,16 @@ public = false
 file_size_limit = "10MiB"
 allowed_mime_types = ["image/jpeg", "image/png", "image/webp"]
 
+[storage.buckets.avatars]
+public = true
+file_size_limit = "2MiB"
+allowed_mime_types = ["image/jpeg", "image/png", "image/webp"]
+
+[storage.buckets.post-images]
+public = true
+file_size_limit = "10MiB"
+allowed_mime_types = ["image/jpeg", "image/png", "image/webp"]
+
 # Allow connections via S3 compatible clients
 [storage.s3_protocol]
 enabled = true
