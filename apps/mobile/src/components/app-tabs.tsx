@@ -43,6 +43,10 @@ export default function AppTabs() {
       <NativeTabs.Trigger name="journal">
         <NativeTabs.Trigger.Label>Journal</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="profile">
+        <NativeTabs.Trigger.Label>Profile</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
     </NativeTabs>
   );
 }
