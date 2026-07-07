@@ -55,6 +55,10 @@ jobs:
 
       - run: supabase db lint
 
+      # pgTAP suite in supabase/tests — pins the RLS visibility matrix
+      # (garden visibility, blocks, zip grant, own-row tasks, takedowns).
+      - run: supabase test db
+
   edge-functions:
     runs-on: ubuntu-latest
     # Advisory for now — flip to blocking once it has run green on main.
