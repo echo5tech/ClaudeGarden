@@ -35,13 +35,18 @@ type RawPostRow = Omit<FeedPost, 'likeCount' | 'commentCount' | 'likedByMe'> & {
 
 export async function fetchFeed(
   userId: string,
-  limit = 30,
+  options: { limit?: number; before?: string } = {},
 ): Promise<{ posts: FeedPost[]; error: string | null }> {
-  const { data, error } = await supabase
+  const { limit = 30, before } = options;
+  let query = supabase
     .from('posts')
     .select(POST_SELECT)
     .order('created_at', { ascending: false })
     .limit(limit);
+  if (before) {
+    query = query.lt('created_at', before);
+  }
+  const { data, error } = await query;
   if (error) return { posts: [], error: error.message };
 
   const rows = (data ?? []) as unknown as RawPostRow[];

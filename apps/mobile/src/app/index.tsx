@@ -126,18 +126,33 @@ function Composer({ userId, onPosted }: { userId: string; onPosted: () => void }
   );
 }
 
+const PAGE_SIZE = 30;
+
 export default function HomeScreen() {
   const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
   const [posts, setPosts] = useState<FeedPost[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
   const load = useCallback(async (uid: string) => {
-    const { posts: feed, error: feedError } = await fetchFeed(uid);
+    const { posts: feed, error: feedError } = await fetchFeed(uid, { limit: PAGE_SIZE });
     setError(feedError);
     setPosts(feed);
+    setHasMore(feed.length === PAGE_SIZE);
   }, []);
+
+  const loadMore = useCallback(async () => {
+    if (!userId || !posts || posts.length === 0 || loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    const oldest = posts[posts.length - 1]!.created_at;
+    const { posts: older } = await fetchFeed(userId, { limit: PAGE_SIZE, before: oldest });
+    setPosts((current) => [...(current ?? []), ...older]);
+    setHasMore(older.length === PAGE_SIZE);
+    setLoadingMore(false);
+  }, [userId, posts, loadingMore, hasMore]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -174,6 +189,9 @@ export default function HomeScreen() {
             data={posts}
             keyExtractor={(p) => p.id}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+            onEndReached={() => void loadMore()}
+            onEndReachedThreshold={0.5}
+            ListFooterComponent={loadingMore ? <ActivityIndicator style={styles.loader} /> : null}
             ListHeaderComponent={
               <Composer userId={userId} onPosted={() => void load(userId)} />
             }
