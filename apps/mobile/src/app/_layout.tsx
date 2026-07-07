@@ -1,18 +1,26 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, useColorScheme, View } from 'react-native';
-import { DarkTheme, DefaultTheme, ThemeProvider, useRouter } from 'expo-router';
+import { DarkTheme, DefaultTheme, ThemeProvider, usePathname, useRouter } from 'expo-router';
 import type { Session } from '@supabase/supabase-js';
 
 import AppTabs from '@/components/app-tabs';
 import { usePushRegistration } from '@/hooks/use-push-registration';
 import { useNotificationObserver } from '@/lib/notifications';
+// Importing initializes Sentry + PostHog (no-ops without env keys).
+import { trackScreen } from '@/lib/observability';
 import { supabase } from '@/lib/supabase';
 import { onboardingDismissedKey } from '@/app/onboarding';
 
 function AuthenticatedApp() {
   usePushRegistration();
   useNotificationObserver();
+
+  const pathname = usePathname();
+  useEffect(() => {
+    trackScreen(pathname);
+  }, [pathname]);
+
   return <AppTabs />;
 }
 
