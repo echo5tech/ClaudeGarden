@@ -169,6 +169,18 @@ export function AuthForm({ redirectTo, initialError }: AuthFormProps) {
             </Button>
           </form>
 
+          <p className="mt-4 text-center text-xs text-muted-foreground">
+            By continuing you agree to our{" "}
+            <Link href="/terms" className="underline underline-offset-4 hover:no-underline">
+              Terms
+            </Link>{" "}
+            and{" "}
+            <Link href="/privacy" className="underline underline-offset-4 hover:no-underline">
+              Privacy Policy
+            </Link>
+            .
+          </p>
+
           <p className="mt-4 text-center text-sm text-muted-foreground">
             {mode === "signin" ? (
               <>

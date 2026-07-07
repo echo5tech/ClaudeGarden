@@ -1,4 +1,5 @@
 import { Image } from 'expo-image';
+import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
@@ -34,6 +35,8 @@ type Notification = {
   created_at: string;
   actor: { display_name: string; username: string | null } | null;
 };
+
+const WEB_URL = process.env.EXPO_PUBLIC_WEB_URL ?? 'https://wegarden.app';
 
 const VERB: Record<Notification['type'], string> = {
   follow: 'started following you',
@@ -215,6 +218,25 @@ export default function ProfileScreen() {
                   style={({ pressed }) => pressed && styles.pressed}>
                   <ThemedText type="small" style={styles.dangerText}>
                     Delete account
+                  </ThemedText>
+                </Pressable>
+              </View>
+
+              <View style={styles.actionsRow}>
+                <Pressable
+                  onPress={() => Linking.openURL(`${WEB_URL}/terms`)}
+                  accessibilityRole="link"
+                  style={({ pressed }) => pressed && styles.pressed}>
+                  <ThemedText type="small" themeColor="textSecondary">
+                    Terms
+                  </ThemedText>
+                </Pressable>
+                <Pressable
+                  onPress={() => Linking.openURL(`${WEB_URL}/privacy`)}
+                  accessibilityRole="link"
+                  style={({ pressed }) => pressed && styles.pressed}>
+                  <ThemedText type="small" themeColor="textSecondary">
+                    Privacy
                   </ThemedText>
                 </Pressable>
               </View>

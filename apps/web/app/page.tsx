@@ -94,7 +94,7 @@ function Landing() {
         Answer &ldquo;What should I plant now?&rdquo; — drag-and-drop bed designer,
         daily reminders on your phone, and a community of gardeners to learn from.
       </p>
-      <div className="flex gap-3 mb-16">
+      <div className="flex gap-3 mb-3">
         <Link
           href="/auth"
           className="rounded-lg bg-foreground text-background px-4 py-2 text-sm font-medium hover:opacity-90 transition-opacity"
@@ -108,6 +108,15 @@ function Landing() {
           Browse the plant catalog
         </Link>
       </div>
+      <p className="text-xs text-zinc-400 mb-16">
+        <Link href="/terms" className="underline underline-offset-4 hover:no-underline">
+          Terms
+        </Link>{' '}
+        ·{' '}
+        <Link href="/privacy" className="underline underline-offset-4 hover:no-underline">
+          Privacy
+        </Link>
+      </p>
       <ul className="grid gap-6 sm:grid-cols-3 text-sm">
         <li>
           <h2 className="font-semibold mb-1">🌱 Plan</h2>
