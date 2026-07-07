@@ -209,6 +209,7 @@ export type Database = {
         Row: {
           body: string
           created_at: string
+          hidden_at: string | null
           id: string
           post_id: string
           user_id: string
@@ -216,6 +217,7 @@ export type Database = {
         Insert: {
           body: string
           created_at?: string
+          hidden_at?: string | null
           id?: string
           post_id: string
           user_id: string
@@ -223,6 +225,7 @@ export type Database = {
         Update: {
           body?: string
           created_at?: string
+          hidden_at?: string | null
           id?: string
           post_id?: string
           user_id?: string
@@ -539,6 +542,7 @@ export type Database = {
           body: string
           created_at: string
           garden_id: string | null
+          hidden_at: string | null
           id: string
           image_url: string | null
           user_id: string
@@ -547,6 +551,7 @@ export type Database = {
           body: string
           created_at?: string
           garden_id?: string | null
+          hidden_at?: string | null
           id?: string
           image_url?: string | null
           user_id: string
@@ -555,6 +560,7 @@ export type Database = {
           body?: string
           created_at?: string
           garden_id?: string | null
+          hidden_at?: string | null
           id?: string
           image_url?: string | null
           user_id?: string
@@ -735,6 +741,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      delete_own_account: { Args: never; Returns: undefined }
       generate_daily_tasks: { Args: never; Returns: undefined }
       invoke_edge_function: { Args: { function_name: string }; Returns: number }
       is_blocked_pair: { Args: { a: string; b: string }; Returns: boolean }

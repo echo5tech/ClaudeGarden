@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -135,6 +136,17 @@ export function AuthForm({ redirectTo, initialError }: AuthFormProps) {
                 placeholder="••••••••"
               />
             </div>
+
+            {mode === "signin" && (
+              <p className="text-right text-xs -mt-2">
+                <Link
+                  href="/auth/forgot"
+                  className="text-muted-foreground underline underline-offset-4 hover:no-underline"
+                >
+                  Forgot password?
+                </Link>
+              </p>
+            )}
 
             {error && (
               <p className="text-sm text-destructive" role="alert">

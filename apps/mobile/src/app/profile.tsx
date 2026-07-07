@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Platform,
   Pressable,
@@ -123,6 +124,28 @@ export default function ProfileScreen() {
     setSigningOut(false);
   }
 
+  function confirmDeleteAccount() {
+    Alert.alert(
+      'Delete account?',
+      'This permanently deletes your account, gardens, posts, and photos. It cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete everything',
+          style: 'destructive',
+          onPress: async () => {
+            const { error: deleteError } = await supabase.rpc('delete_own_account');
+            if (deleteError) {
+              Alert.alert('Could not delete account', deleteError.message);
+              return;
+            }
+            await supabase.auth.signOut();
+          },
+        },
+      ],
+    );
+  }
+
   if (!profile && !error) {
     return (
       <ThemedView style={[styles.container, styles.centered]}>
@@ -183,6 +206,15 @@ export default function ProfileScreen() {
                   style={({ pressed }) => (pressed || signingOut) && styles.pressed}>
                   <ThemedText type="linkPrimary">
                     {signingOut ? 'Signing out…' : 'Sign out'}
+                  </ThemedText>
+                </Pressable>
+                <Pressable
+                  onPress={confirmDeleteAccount}
+                  accessibilityRole="button"
+                  accessibilityLabel="Delete account"
+                  style={({ pressed }) => pressed && styles.pressed}>
+                  <ThemedText type="small" style={styles.dangerText}>
+                    Delete account
                   </ThemedText>
                 </Pressable>
               </View>
@@ -279,5 +311,6 @@ const styles = StyleSheet.create({
     backgroundColor: Palette.green,
   },
   error: { color: Palette.danger },
+  dangerText: { color: Palette.danger },
   pressed: { opacity: 0.6 },
 });

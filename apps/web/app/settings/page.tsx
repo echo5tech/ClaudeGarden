@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { SettingsForm } from "./settings-form";
+import { DeleteAccount } from "./delete-account";
 
 export const metadata = {
   title: "Settings — WeGarden",
@@ -61,6 +62,8 @@ export default async function SettingsPage() {
           </form>
         </CardContent>
       </Card>
+
+      <DeleteAccount />
     </main>
   );
 }

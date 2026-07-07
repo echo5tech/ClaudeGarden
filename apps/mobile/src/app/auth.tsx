@@ -27,6 +27,27 @@ export default function AuthScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  async function handleForgotPassword() {
+    const trimmed = email.trim();
+    if (!trimmed) {
+      setError('Enter your email above first, then tap "Forgot password".');
+      return;
+    }
+    setError(null);
+    setNotice(null);
+    // The reset link opens the web app's reset page (a session-aware form).
+    const webUrl = process.env.EXPO_PUBLIC_WEB_URL ?? 'https://wegarden.app';
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(trimmed, {
+      redirectTo: `${webUrl}/auth/callback?next=${encodeURIComponent('/auth/reset')}`,
+    });
+    if (resetError) {
+      setError(resetError.message);
+    } else {
+      setNotice(`If an account exists for ${trimmed}, a reset link is on its way.`);
+    }
+  }
 
   async function handleSignIn() {
     setLoading(true);
@@ -99,6 +120,12 @@ export default function AuthScreen() {
               </ThemedView>
             )}
 
+            {notice && (
+              <ThemedView type="backgroundElement" style={styles.errorBox}>
+                <ThemedText type="small">{notice}</ThemedText>
+              </ThemedView>
+            )}
+
             <View style={styles.form}>
               <TextInput
                 style={inputStyle}
@@ -156,6 +183,7 @@ export default function AuthScreen() {
               style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
               onPress={() => {
                 setError(null);
+                setNotice(null);
                 setMode(mode === 'signIn' ? 'signUp' : 'signIn');
               }}>
               <ThemedText type="linkPrimary" style={styles.toggleText}>
@@ -164,6 +192,17 @@ export default function AuthScreen() {
                   : 'Already have an account? Sign in'}
               </ThemedText>
             </Pressable>
+
+            {mode === 'signIn' && (
+              <Pressable
+                style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
+                onPress={handleForgotPassword}
+                disabled={loading}>
+                <ThemedText type="small" themeColor="textSecondary" style={styles.toggleText}>
+                  Forgot password?
+                </ThemedText>
+              </Pressable>
+            )}
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>

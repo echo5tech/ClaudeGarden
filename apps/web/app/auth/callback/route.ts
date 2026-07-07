@@ -4,6 +4,13 @@ import { createClient } from "@/lib/supabase/server";
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl;
   const code = searchParams.get("code");
+  // Password-reset (and similar) flows land here with ?next=<path> so the
+  // session exchange can hand off to a specific page. Same-origin paths only.
+  const nextParam = searchParams.get("next");
+  const next =
+    nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//")
+      ? nextParam
+      : null;
 
   if (!code) {
     return NextResponse.redirect(
@@ -20,6 +27,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(
         `${origin}/auth?error=${encodeURIComponent(exchangeError.message)}`,
       );
+    }
+
+    if (next) {
+      return NextResponse.redirect(`${origin}${next}`);
     }
 
     const {
