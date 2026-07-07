@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
+import { PlantNow } from '@/components/plant-now';
 import { PostCard } from '@/components/post-card';
 import { PostComposer } from '@/components/post-composer';
 import { POST_SELECT, decoratePosts } from '@/lib/posts';
@@ -49,6 +50,8 @@ export default async function Home({
   return (
     <main className="min-h-screen px-4 sm:px-8 py-10 max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold tracking-tight mb-6">Home</h1>
+
+      <PlantNow userId={user.id} />
 
       <PostComposer placeholder="What's growing in your garden?" />
 

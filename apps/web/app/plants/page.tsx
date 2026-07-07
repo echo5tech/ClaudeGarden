@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
+import { PlantNow } from '@/components/plant-now';
 
 export const metadata: Metadata = {
   title: 'Plant catalog — WeGarden',
@@ -34,9 +35,15 @@ export default async function PlantCatalogPage({
   const pageHref = (p: number) =>
     `/plants?${new URLSearchParams({ ...(q ? { q } : {}), page: String(p) })}`;
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
     <main className="min-h-screen px-4 sm:px-8 py-10 max-w-3xl mx-auto">
       <h1 className="text-2xl font-bold tracking-tight mb-6">Plant catalog</h1>
+
+      {user && <PlantNow userId={user.id} />}
 
       <form action="/plants" method="get" className="mb-6 flex gap-2">
         <input
