@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -25,13 +27,19 @@ export default function AuthPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
-    const supabase = createClient();
     e.preventDefault();
     setError(null);
     setSuccessMessage(null);
     setIsLoading(true);
 
     try {
+      if (!isSupabaseConfigured()) {
+        setError(
+          "Account connection is not configured in this preview. You can explore the sample garden below.",
+        );
+        return;
+      }
+      const supabase = createClient();
       if (mode === "signin") {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -40,7 +48,17 @@ export default function AuthPage() {
         if (error) {
           setError(error.message);
         } else {
-          router.push("/");
+          const destination = new URLSearchParams(window.location.search).get(
+            "redirectTo",
+          );
+          const safeDestination =
+            destination?.startsWith("/") &&
+            !destination.startsWith("//") &&
+            !destination.includes("\\")
+              ? destination
+              : "/";
+          router.push(safeDestination);
+          router.refresh();
         }
       } else {
         const { error } = await supabase.auth.signUp({
@@ -58,6 +76,8 @@ export default function AuthPage() {
           setSuccessMessage("Check your email to confirm your account.");
         }
       }
+    } catch {
+      setError("Could not connect. Please try signing in again.");
     } finally {
       setIsLoading(false);
     }
@@ -71,9 +91,11 @@ export default function AuthPage() {
 
   return (
     <main className="flex flex-1 items-center justify-center px-4 py-12">
-      <Card className="w-full max-w-sm">
+      <Card className="w-full max-w-sm !p-3">
         <CardHeader>
-          <CardTitle>{mode === "signin" ? "Sign in" : "Create account"}</CardTitle>
+          <CardTitle>
+            {mode === "signin" ? "Sign in" : "Create account"}
+          </CardTitle>
           <CardDescription>
             {mode === "signin"
               ? "Welcome back to WeGarden."
@@ -81,6 +103,9 @@ export default function AuthPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <Link href="/demo" className="button-secondary full-width mb-6">
+            Explore a sample garden first →
+          </Link>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             {mode === "signup" && (
               <div className="flex flex-col gap-1.5">
@@ -132,7 +157,10 @@ export default function AuthPage() {
             )}
 
             {successMessage && (
-              <p className="text-sm text-green-600 dark:text-green-400" role="status">
+              <p
+                className="text-sm text-green-600 dark:text-green-400"
+                role="status"
+              >
                 {successMessage}
               </p>
             )}

@@ -1,3 +1,4 @@
+import { PageHeading } from "@/components/workspace/primitives";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -34,7 +35,9 @@ export default async function ExplorePage() {
 
   const { data: gardens } = await supabase
     .from("gardens")
-    .select("id, name, created_at, user_id, profiles(display_name), beds(count)")
+    .select(
+      "id, name, created_at, user_id, profiles(display_name), beds(count)",
+    )
     .eq("visibility", "public")
     .order("created_at", { ascending: false })
     .limit(30);
@@ -48,11 +51,12 @@ export default async function ExplorePage() {
   const gardenList = (gardens as unknown as GardenRow[]) ?? [];
 
   return (
-    <main className="min-h-screen px-8 py-16 max-w-3xl mx-auto">
-      <h1 className="text-3xl font-bold tracking-tight mb-2">Explore</h1>
-      <p className="text-zinc-500 mb-8 text-sm">
-        Discover public gardens from the community.
-      </p>
+    <main className="page-wrap">
+      <PageHeading
+        eyebrow="INSPIRATION GROWS HERE"
+        title="Good things grow together."
+        description="Step into someone else’s growing world. Find inspiration and follow along."
+      />
 
       {gardenList.length === 0 ? (
         <div className="border rounded-xl p-12 text-center text-zinc-500">
@@ -63,7 +67,7 @@ export default async function ExplorePage() {
           .
         </div>
       ) : (
-        <ul className="space-y-4">
+        <ul className="grid grid-cols-1 xl:grid-cols-2 gap-5">
           {gardenList.map((garden) => {
             const bedCount = garden.beds?.[0]?.count ?? 0;
             const ownerName = garden.profiles?.display_name ?? "Unknown";
@@ -90,9 +94,7 @@ export default async function ExplorePage() {
                         </CardDescription>
                       </div>
                       {!isOwn && (
-                        <form
-                          action={isFollowing ? unfollowUser : followUser}
-                        >
+                        <form action={isFollowing ? unfollowUser : followUser}>
                           <input
                             type="hidden"
                             name="followeeId"

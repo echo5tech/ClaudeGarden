@@ -90,7 +90,7 @@ export default async function PlantDetailPage({
     <main className="min-h-screen px-8 py-16 max-w-2xl mx-auto">
       <div className="mb-4">
         <Link
-          href="/"
+          href="/plants"
           className="text-sm text-zinc-400 hover:text-zinc-600 transition-colors"
         >
           ← Catalog
@@ -98,7 +98,9 @@ export default async function PlantDetailPage({
       </div>
 
       <h1 className="text-3xl font-bold tracking-tight">{plant.common_name}</h1>
-      <p className="text-zinc-500 italic mb-8 text-sm">{plant.scientific_name}</p>
+      <p className="text-zinc-500 italic mb-8 text-sm">
+        {plant.scientific_name}
+      </p>
 
       <dl className="grid grid-cols-[max-content_1fr] gap-x-8 gap-y-3 mb-10">
         <InfoRow label="Days to harvest" value={plant.days_to_harvest} />

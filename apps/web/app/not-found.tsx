@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import Link from "next/link";
 
 export default function NotFound() {
   return (
@@ -12,8 +12,8 @@ export default function NotFound() {
         href="/"
         className="text-sm font-medium underline underline-offset-4 hover:text-zinc-600 dark:hover:text-zinc-300"
       >
-        Back to the catalog
+        Back to Today
       </Link>
     </main>
-  )
+  );
 }

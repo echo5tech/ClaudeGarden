@@ -1,159 +1,56 @@
-# Turborepo starter
+# WeGarden
 
-This Turborepo starter is maintained by the Turborepo core team.
+A thoughtful garden companion: plan a bed, discover plants, keep up with care, and share what grows.
 
-## Using this example
+## Run the web app
 
-Run the following command:
-
-```sh
-npx create-turbo@latest
-```
-
-## What's inside?
-
-This Turborepo includes the following packages/apps:
-
-### Apps and Packages
-
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+Use Node 22+ and pnpm 9 (the version pinned in `packageManager`).
 
 ```sh
-cd my-turborepo
-turbo build
+pnpm install --frozen-lockfile
+pnpm web
 ```
 
-Without global `turbo`, use your package manager:
+Open `http://localhost:3000`. The public welcome screen and `/demo` work without Supabase credentials. The demo is explicitly labeled and keeps sample edits in the current browser; it never sends sample writes to Supabase. Clear browser storage to remove all sample drafts.
+
+For a real account, set these in `apps/web/.env.local`:
+
+```dotenv
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
+```
+
+Configure the sign-in callback for your origin at `/auth/callback`. The existing Supabase migrations, RLS, catalog sync, and reminder jobs remain the backend. Follow `CLAUDE.md` for the backend and Expo setup. Never put a secret/service-role key in a public environment variable.
+
+## Product surfaces
+
+- `/`: welcome for visitors; Today dashboard for signed-in gardeners.
+- `/gardens`: garden creation, every saved bed, new beds, and confirmed deletion.
+- `/plants`: searchable plant library with filters and plant detail dialogs.
+- `/tasks`: care tasks with completion, reopening, and failure feedback.
+- `/calendar`: navigable care calendar plus the existing planting/harvest forecast.
+- `/designer?garden=…&bed=…`: drag-and-drop bed design with keyboard additions, spacing checks, and saved layouts.
+- `/explore`, `/botanist`, `/settings`: community, garden advice, and account setup.
+- `/demo`: isolated interactive sample workspace.
+
+## Verify
 
 ```sh
-cd my-turborepo
-npx turbo build
-pnpm dlx turbo build
-pnpm exec turbo build
+pnpm --filter @garden/web check-types
+pnpm --filter @garden/web lint
+pnpm --filter @garden/web test
+pnpm --filter @garden/shared test
+pnpm --filter @garden/web build
+pnpm --filter @garden/web exec playwright install chromium
+pnpm --filter @garden/web test:e2e
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+Browser tests launch the web app on port 3100 with no backend configured. They cover the demo, public entry, protected-route redirects, phone layouts, persistence, dialogs, and automated accessibility. To use an existing Chromium installation, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to its executable path. Live Supabase and native device acceptance tests require those environments and are not replaced by the demo tests.
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+## Architecture and roadmap
 
-```sh
-turbo build --filter=docs
-```
+`apps/web` uses Next.js 16, React 19, Tailwind 4, Base UI dialogs, and Zustand for bed design. Server-side workspace loaders and authenticated actions map the existing database to shared screen components. No schema migration is required for the web rebuild.
 
-Without global `turbo`:
+`apps/mobile` remains the Expo app, and `packages/shared` supplies domain calculations across platforms. Read [the rebuild plan](docs/REBUILD-PLAN.md) for product priorities, the design system, staged delivery, and release acceptance. [Verification notes](docs/VERIFICATION.md) record what was actually tested.
 
-```sh
-npx turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
-
-### Develop
-
-To develop all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo dev
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo dev
-pnpm exec turbo dev
-pnpm exec turbo dev
-```
-
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo dev --filter=web
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-pnpm exec turbo login
-pnpm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-pnpm exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+The dashboard's [botanical artwork](apps/web/public/art/kitchen-garden.png) was generated for this app. [Asset provenance](docs/ASSETS.md) records the prompt and use.

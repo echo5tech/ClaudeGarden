@@ -1,9 +1,12 @@
-import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
+import { CareCalendar } from "@/components/workspace/calendar";
+import { PageHeading } from "@/components/workspace/primitives";
+import { loadWorkspace } from "@/lib/workspace/load";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type EventType = 'sow' | 'transplant' | 'harvest';
+type EventType = "sow" | "transplant" | "harvest";
 
 interface CalendarEvent {
   date: Date;
@@ -22,12 +25,15 @@ function addDays(base: Date, days: number): Date {
 
 /** Parse a Postgres `date` string (YYYY-MM-DD) without timezone shifting. */
 function parseDate(s: string): Date {
-  const [y, m, d] = s.split('-').map(Number);
+  const [y, m, d] = s.split("-").map(Number);
   return new Date(y, m - 1, d);
 }
 
 function formatMonth(year: number, month: number): string {
-  return new Date(year, month).toLocaleString('en-US', { month: 'long', year: 'numeric' });
+  return new Date(year, month).toLocaleString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
 }
 
 function daysInMonth(year: number, month: number): number {
@@ -40,23 +46,27 @@ function firstDayOffset(year: number, month: number): number {
 }
 
 function isSameDay(a: Date, b: Date): boolean {
-  return a.getFullYear() === b.getFullYear() &&
+  return (
+    a.getFullYear() === b.getFullYear() &&
     a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate();
+    a.getDate() === b.getDate()
+  );
 }
 
 // ── Chip styles ───────────────────────────────────────────────────────────────
 
 const chipStyle: Record<EventType, string> = {
-  sow: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
-  transplant: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300',
-  harvest: 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300',
+  sow: "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
+  transplant:
+    "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
+  harvest:
+    "bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300",
 };
 
 const chipLabel: Record<EventType, string> = {
-  sow: 'Sow',
-  transplant: 'Transplant',
-  harvest: 'Harvest',
+  sow: "Sow",
+  transplant: "Transplant",
+  harvest: "Harvest",
 };
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
@@ -96,7 +106,7 @@ function MonthGrid({
 
       {/* Day-of-week headers */}
       <div className="grid grid-cols-7 mb-1">
-        {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
+        {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
           <div key={d} className="text-xs text-zinc-400 text-center py-1">
             {d}
           </div>
@@ -115,7 +125,9 @@ function MonthGrid({
               key={day}
               className="min-h-[52px] border border-zinc-100 dark:border-zinc-800 rounded p-0.5 flex flex-col"
             >
-              <span className="text-[11px] text-zinc-500 leading-none mb-0.5 pl-0.5">{day}</span>
+              <span className="text-[11px] text-zinc-500 leading-none mb-0.5 pl-0.5">
+                {day}
+              </span>
               <div className="flex flex-col gap-0.5">
                 {dayEvents.map((ev, j) => (
                   <span
@@ -145,18 +157,18 @@ export default async function CalendarPage() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/auth');
+    redirect("/auth");
   }
 
   // Profile for frost date
   const { data: profile } = await supabase
-    .from('profiles')
-    .select('hardiness_zone, last_frost_date')
-    .eq('user_id', user.id)
+    .from("profiles")
+    .select("hardiness_zone, last_frost_date")
+    .eq("user_id", user.id)
     .single();
 
   // Bed plants with plant + garden context (RLS handles filtering to own gardens)
-  const { data: bedPlants } = await supabase.from('bed_plants').select(`
+  const { data: bedPlants } = await supabase.from("bed_plants").select(`
     id,
     planted_date,
     plants(common_name, days_to_harvest, sow_weeks_before_frost, direct_sow_weeks_after_frost),
@@ -167,8 +179,9 @@ export default async function CalendarPage() {
 
   const events: CalendarEvent[] = [];
 
-  const frostDate =
-    profile?.last_frost_date ? parseDate(profile.last_frost_date) : null;
+  const frostDate = profile?.last_frost_date
+    ? parseDate(profile.last_frost_date)
+    : null;
 
   for (const bp of bedPlants ?? []) {
     const plant = bp.plants as unknown as {
@@ -181,7 +194,7 @@ export default async function CalendarPage() {
     // Nested join shape: beds -> gardens
     const gardenName =
       (bp.beds as { gardens: { name: string } | null } | null)?.gardens?.name ??
-      'Unknown garden';
+      "Unknown garden";
 
     if (!plant) continue;
     const plantName = plant.common_name;
@@ -190,7 +203,7 @@ export default async function CalendarPage() {
     if (plant.sow_weeks_before_frost != null && frostDate) {
       events.push({
         date: addDays(frostDate, -plant.sow_weeks_before_frost * 7),
-        type: 'sow',
+        type: "sow",
         plantName,
         gardenName,
       });
@@ -200,7 +213,7 @@ export default async function CalendarPage() {
     if (plant.direct_sow_weeks_after_frost != null && frostDate) {
       events.push({
         date: addDays(frostDate, plant.direct_sow_weeks_after_frost * 7),
-        type: 'transplant',
+        type: "transplant",
         plantName,
         gardenName,
       });
@@ -210,7 +223,7 @@ export default async function CalendarPage() {
     if (bp.planted_date && plant.days_to_harvest != null) {
       events.push({
         date: addDays(parseDate(bp.planted_date), plant.days_to_harvest),
-        type: 'harvest',
+        type: "harvest",
         plantName,
         gardenName,
       });
@@ -220,6 +233,7 @@ export default async function CalendarPage() {
   // ── 3-month rolling window ────────────────────────────────────────────────
 
   const today = new Date();
+  const workspace = await loadWorkspace();
   const months: Array<{ year: number; month: number }> = [];
   for (let i = 0; i < 3; i++) {
     const d = new Date(today.getFullYear(), today.getMonth() + i, 1);
@@ -239,11 +253,16 @@ export default async function CalendarPage() {
   const noBedPlants = !bedPlants || bedPlants.length === 0;
 
   return (
-    <main className="min-h-screen px-6 py-12 max-w-5xl mx-auto">
-      <h1 className="text-3xl font-bold tracking-tight mb-1">Planting Calendar</h1>
-      <p className="text-zinc-500 mb-8 text-sm">
-        Your personalised sow, transplant, and harvest schedule.
-      </p>
+    <main className="page-wrap">
+      <PageHeading
+        eyebrow="MAKE ROOM FOR THE SEASON"
+        title="Your growing calendar"
+        description="Choose a day to see what needs care, then look ahead to planting and harvest."
+      />
+      <CareCalendar data={workspace} />
+      <h2 className="mt-10 mb-5 text-xl font-medium">
+        Planting & harvest outlook
+      </h2>
 
       {/* Warning: no frost date */}
       {noFrostDate && (
@@ -266,7 +285,10 @@ export default async function CalendarPage() {
           {/* Legend */}
           <div className="flex items-center gap-4 mb-6 flex-wrap">
             {(Object.keys(chipLabel) as EventType[]).map((type) => (
-              <span key={type} className={`text-xs font-medium px-2 py-0.5 rounded-full ${chipStyle[type]}`}>
+              <span
+                key={type}
+                className={`text-xs font-medium px-2 py-0.5 rounded-full ${chipStyle[type]}`}
+              >
                 {chipLabel[type]}
               </span>
             ))}
@@ -300,12 +322,14 @@ export default async function CalendarPage() {
                       {chipLabel[ev.type]}
                     </span>
                     <span className="font-medium">{ev.plantName}</span>
-                    <span className="text-zinc-400 text-xs">{ev.gardenName}</span>
+                    <span className="text-zinc-400 text-xs">
+                      {ev.gardenName}
+                    </span>
                     <span className="ml-auto text-zinc-500 text-xs">
-                      {ev.date.toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
+                      {ev.date.toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
                       })}
                     </span>
                   </li>

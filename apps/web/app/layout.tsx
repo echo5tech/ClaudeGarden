@@ -1,33 +1,36 @@
-import type { Metadata } from 'next';
-import Link from 'next/link';
-import { Geist, Geist_Mono } from 'next/font/google';
-import { NavLinks } from '@/components/nav-links';
-import { NavAuth } from '@/components/nav-auth';
-import './globals.css';
-
-const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
-const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] });
-
+import type { Metadata } from "next";
+import { Geist, Geist_Mono, Lora } from "next/font/google";
+import { WorkspaceShell } from "@/components/workspace/shell";
+import { Toaster } from "sonner";
+import "./globals.css";
+const sans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
+const mono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+const display = Lora({
+  variable: "--font-display",
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+});
 export const metadata: Metadata = {
-  title: 'WeGarden',
-  description: 'Cross-platform gardening app — plan, grow, share.',
+  title: {
+    default: "WeGarden — A little care. A lot of possibility.",
+    template: "%s — WeGarden",
+  },
+  description:
+    "Your everyday garden companion. Plan beautiful beds, discover plants, and grow a little every day.",
 };
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${sans.variable} ${mono.variable} ${display.variable} antialiased`}
     >
-      <body className="h-full flex flex-col bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50">
-        <nav className="h-11 shrink-0 flex items-center px-4 gap-6 border-b bg-white dark:bg-zinc-950">
-          <Link href="/" className="font-semibold text-sm tracking-tight">
-            WeGarden
-          </Link>
-          <NavLinks />
-          <NavAuth />
-        </nav>
-        {children}
+      <body>
+        <WorkspaceShell>{children}</WorkspaceShell>
+        <Toaster position="bottom-right" richColors />
       </body>
     </html>
   );
