@@ -53,3 +53,7 @@ pnpm-debug.log*
 
 # Claude Code agent worktrees
 .claude/worktrees/
+
+# Browser verification artifacts
+**/test-results/
+**/playwright-report/

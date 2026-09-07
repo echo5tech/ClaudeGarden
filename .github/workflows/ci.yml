@@ -9,8 +9,8 @@ jobs:
   checks:
     runs-on: ubuntu-latest
     env:
-      # Dummy values so `next build` can inline them; pages fall back to demo
-      # data when Supabase is unreachable, so validity is not required.
+      # Dummy public values for compilation only. Live account behavior is not
+      # tested here; browser tests use the explicitly isolated demo workspace.
       NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_dummy
       NEXT_TELEMETRY_DISABLED: "1"
@@ -54,3 +54,21 @@ jobs:
       - run: supabase db start
 
       - run: supabase db lint
+
+  web-browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @garden/web exec playwright install --with-deps chromium
+      - run: pnpm --filter @garden/web test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: web-browser-failures
+          path: apps/web/test-results/

@@ -1,12 +1,40 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/lib/supabase/proxy";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 import type { Database } from "@garden/database";
 
-const PROTECTED_ROUTES = ["/gardens", "/designer", "/tasks", "/settings", "/botanist", "/calendar"];
+const PROTECTED_ROUTES = [
+  "/gardens",
+  "/designer",
+  "/tasks",
+  "/settings",
+  "/botanist",
+  "/calendar",
+];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Demo routes never contact the account backend.
+  if (pathname === "/demo" || pathname.startsWith("/demo/"))
+    return NextResponse.next();
+  if (!isSupabaseConfigured()) {
+    if (
+      PROTECTED_ROUTES.some(
+        (route) => pathname === route || pathname.startsWith(route + "/"),
+      ) ||
+      pathname.startsWith("/explore")
+    ) {
+      const destination = new URL("/auth", request.url);
+      destination.searchParams.set(
+        "redirectTo",
+        pathname + request.nextUrl.search,
+      );
+      return NextResponse.redirect(destination);
+    }
+    return NextResponse.next();
+  }
 
   // Always refresh the session (writes updated cookies to the response).
   const response = await updateSession(request);
@@ -44,8 +72,15 @@ export async function proxy(request: NextRequest) {
   if (!user) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/auth";
-    redirectUrl.searchParams.set("redirectTo", pathname);
-    return NextResponse.redirect(redirectUrl);
+    redirectUrl.search = "";
+    redirectUrl.searchParams.set(
+      "redirectTo",
+      pathname + request.nextUrl.search,
+    );
+    const redirectResponse = NextResponse.redirect(redirectUrl);
+    for (const cookie of response.cookies.getAll())
+      redirectResponse.cookies.set(cookie);
+    return redirectResponse;
   }
 
   return response;
